@@ -1,0 +1,786 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Cloxion</title>
+
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        background-color: #f0f4f8;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        margin: 0;
+        overflow: hidden;
+      }
+
+      .login-container,
+      .chat-container {
+        background-color: white;
+        border-radius: 8px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        padding: 20px;
+        width: 90%;
+        max-width: 400px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+
+      .login-container h2 {
+        margin-bottom: 10px;
+      }
+
+      .login-container input {
+        margin: 10px 0;
+        padding: 10px;
+        width: 100%;
+        border-radius: 5px;
+        border: 1px solid #ccc;
+        background-color: #fff;
+        color: #000;
+      }
+
+      .login-container input::placeholder {
+        color: #777;
+      }
+
+      .login-container button {
+        background-color: #00bcd4;
+        color: white;
+        border: none;
+        padding: 10px;
+        width: 100%;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+      }
+
+      .login-container button:hover {
+        background-color: #0097a7;
+      }
+
+      .chat-container {
+        display: none;
+        width: 98vw;
+        max-width: 800px;
+        height: 98vh;
+      }
+
+      .chat-header {
+        background-color: #00bcd4;
+        color: white;
+        padding: 15px;
+        font-weight: bold;
+        width: 100%;
+      }
+
+      .chat-messages {
+        flex-grow: 1;
+        overflow-y: auto;
+        padding: 20px;
+        width: 100%;
+      }
+
+      .message {
+        margin-bottom: 10px;
+        padding: 8px 12px;
+        border-radius: 18px;
+        max-width: 75%;
+        word-wrap: break-word;
+        position: relative;
+        user-select: none;
+      }
+
+      .message.sent {
+        background-color: #e0ffff;
+        align-self: flex-end;
+        margin-left: auto;
+      }
+
+      .message.received {
+        background-color: #fffacd;
+        align-self: flex-start;
+        margin-right: auto;
+      }
+
+      .chat-input {
+        display: flex;
+        padding: 10px;
+        width: 100%;
+        background-color: #e9ecef;
+      }
+
+      .chat-input input {
+        flex-grow: 1;
+        border: none;
+        border-radius: 20px;
+        padding: 10px;
+        outline: none;
+      }
+
+      .chat-input button {
+        background-color: #00bcd4;
+        color: white;
+        border: none;
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        font-size: 18px;
+      }
+
+      .context-menu {
+        position: absolute;
+        background: #ffffff;
+        border: 1px solid #ccc;
+        border-radius: 8px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        z-index: 1000;
+        padding: 5px;
+        display: flex;
+        flex-direction: column;
+        min-width: 110px;
+        animation: fadeIn 0.1s ease-out;
+      }
+
+      .context-menu button {
+        background: none;
+        border: none;
+        text-align: left;
+        padding: 8px 12px;
+        width: 100%;
+        cursor: pointer;
+        font-size: 14px;
+        color: #333;
+      }
+
+      .context-menu button:hover {
+        background: #f2f2f2;
+      }
+
+      .user-list {
+        position: absolute;
+        left: 0;
+        top: 0;
+        height: 100%;
+        width: 220px;
+        background: #ffffff;
+        border-right: 1px solid #e0e0e0;
+        box-shadow: 2px 0 6px rgba(0, 0, 0, 0.05);
+        padding: 15px 0;
+        display: flex;
+        flex-direction: column;
+        z-index: 50;
+      }
+
+      .user-list strong {
+        text-align: center;
+        font-size: 18px;
+        color: #00bcd4;
+        margin-bottom: 15px;
+        display: block;
+        font-weight: bold;
+        letter-spacing: 0.5px;
+      }
+
+      .user-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 15px;
+        margin: 3px 8px;
+        border-radius: 10px;
+        cursor: pointer;
+        transition: background 0.2s ease, transform 0.1s ease;
+      }
+
+      .user-item:hover {
+        background: #e0f7fa;
+        transform: translateX(2px);
+      }
+
+      .user-item.active {
+        background: #b2ebf2;
+        font-weight: bold;
+      }
+
+      .user-avatar {
+        width: 35px;
+        height: 35px;
+        border-radius: 50%;
+        background: #00bcd4;
+        color: white;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-weight: bold;
+        font-size: 16px;
+        box-shadow: 0 2px 4px rgba(0, 188, 212, 0.3);
+      }
+
+      .admin-item {
+        background: #e3f2fd;
+        border: 1px solid #90caf9;
+        margin: 6px 8px;
+      }
+
+      .admin-item:hover {
+        background: #bbdefb;
+      }
+
+      .message-time {
+        display: block;
+        font-size: 11px;
+        color: #555;
+        text-align: right;
+        margin-top: 3px;
+      }
+
+      .date-separator {
+        text-align: center;
+        margin: 15px 0;
+        color: #777;
+        font-weight: bold;
+        font-size: 13px;
+        position: relative;
+      }
+
+      .date-separator::before,
+      .date-separator::after {
+        content: "";
+        position: absolute;
+        top: 50%;
+        width: 35%;
+        height: 1px;
+        background: #ccc;
+      }
+
+      .date-separator::before {
+        left: 0;
+      }
+
+      .date-separator::after {
+        right: 0;
+      }
+
+      /* 🌙 MODO OSCURO */
+      @media (prefers-color-scheme: dark) {
+        body {
+          background-color: #121212;
+          color: white;
+        }
+
+        .login-container {
+          background-color: #1e1e1e;
+          box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+        }
+
+        .login-container input {
+          background-color: #2b2b2b;
+          border: 1px solid #444;
+          color: white;
+        }
+
+        .login-container input::placeholder {
+          color: #b0b0b0;
+        }
+
+        .login-container button {
+          background-color: #00838f;
+        }
+
+        .login-container button:hover {
+          background-color: #00acc1;
+        }
+
+        .chat-container {
+          background-color: #1e1e1e;
+          box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+        }
+
+        .chat-messages {
+          background-color: #1e1e1e;
+        }
+
+        .chat-header {
+          background-color: #00838f;
+        }
+
+        .message.sent {
+          background-color: #00796b;
+        }
+
+        .message.received {
+          background-color: #bbaa55;
+          box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+        }
+
+        .chat-input {
+          background-color: #2c2c2c;
+        }
+
+        .chat-input input {
+          background-color: #3a3a3a;
+          color: #ffffff;
+        }
+
+        .chat-input input::placeholder {
+          color: #b0b0b0;
+        }
+
+        .chat-input button {
+          background-color: #00838f;
+        }
+
+        .context-menu {
+          background: #2b2b2b;
+          border: 1px solid #555;
+          box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+        }
+
+        .context-menu button {
+          color: #ddd;
+        }
+
+        .context-menu button:hover {
+          background: #3a3a3a;
+        }
+
+        @keyframes fadeIn {
+          from {
+            opacity: 0;
+            transform: translateY(-5px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+
+        .user-list {
+          background: #1e1e1e;
+          border-right: 1px solid #333;
+          box-shadow: 2px 0 6px rgba(255, 255, 255, 0.05);
+        }
+
+        .user-list strong {
+          color: #00acc1;
+        }
+
+        .user-item {
+          color: #ddd;
+        }
+
+        .user-item:hover {
+          background: #004d40;
+        }
+
+        .user-item.active {
+          background: #00695c;
+          font-weight: bold;
+        }
+
+        .user-avatar {
+          background: #00acc1;
+          color: #fff;
+          box-shadow: 0 2px 4px rgba(0, 172, 193, 0.4);
+        }
+
+        .admin-item {
+          background: #003c4f;
+          border: 1px solid #00838f;
+        }
+
+        .admin-item:hover {
+          background: #004d61;
+        }
+
+        .message-time {
+          color: #bbb;
+        }
+        .date-separator {
+          color: #ccc;
+        }
+        .date-separator::before,
+        .date-separator::after {
+          background: #555;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- LOGIN -->
+    <div class="login-container" id="login-container">
+      <h2>Iniciar sesión</h2>
+      <input type="text" id="username" placeholder="Usuario" />
+      <input type="password" id="password" placeholder="Contraseña" />
+      <button onclick="login()">Entrar</button>
+      <p id="login-error" style="color: red; display: none">
+        Usuario o contraseña incorrectos
+      </p>
+    </div>
+
+    <!-- CHAT -->
+    <div class="chat-container" id="chat-container">
+      <div class="user-list" id="user-list"></div>
+      <div class="chat-header" id="chat-header">Chat</div>
+      <div class="chat-messages" id="chat-messages"></div>
+      <div class="chat-input">
+        <input
+          type="text"
+          id="message-input"
+          placeholder="Escribe un mensaje..."
+        />
+        <button onclick="sendMessage()">➤</button>
+      </div>
+    </div>
+
+    <script type="module">
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+      import {
+        getFirestore,
+        doc,
+        setDoc,
+        getDoc,
+        collection,
+        addDoc,
+        deleteDoc,
+        onSnapshot,
+        query,
+        orderBy,
+        getDocs,
+      } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+
+      const firebaseConfig = {
+        apiKey: "AIzaSyDLKdKtSocG9hLs8mSggXl0cL4MRcpsW5A",
+        authDomain: "iniciosesion-1346.firebaseapp.com",
+        projectId: "iniciosesion-1346",
+        storageBucket: "iniciosesion-1346.firebasestorage.app",
+        messagingSenderId: "746485966333",
+        appId: "1:746485966333:web:cbd2b68649a72e936ca594",
+        measurementId: "G-ZVE389BCKD",
+      };
+
+      const app = initializeApp(firebaseConfig);
+      const db = getFirestore(app);
+      let currentUser = null;
+      let activeChatId = null;
+      let activeChatWith = null;
+
+      async function login() {
+        const username = document.getElementById("username").value.trim();
+        const password = document.getElementById("password").value.trim();
+        const errorMsg = document.getElementById("login-error");
+
+        const userRef = doc(db, "usuarios", username);
+        const userSnap = await getDoc(userRef);
+
+        if (!userSnap.exists()) {
+          if (username === "Miguel" && password === "1346") {
+            await setDoc(userRef, { nombre: "Miguel", password: "1346" });
+          } else {
+            errorMsg.style.display = "block";
+            return;
+          }
+        }
+
+        const userData = (await getDoc(userRef)).data();
+
+        if (userData.password === password) {
+          currentUser = username;
+          document.getElementById("login-container").style.display = "none";
+          document.getElementById("chat-container").style.display = "flex";
+          document.getElementById("chat-header").textContent =
+            "Chat de " + username;
+
+          // Cargar usuarios
+          await loadUserList();
+
+          // ✅ Abrir automáticamente tu chat personal
+          activeChatWith = "Admin";
+          activeChatId = `${currentUser}_admin`;
+          document.getElementById(
+            "chat-header"
+          ).textContent = `${currentUser} (Tú)`;
+          loadMessages(activeChatId);
+
+          // Marcar visualmente el chat activo en el panel
+          const adminItem = document.querySelector(".admin-item");
+          if (adminItem) adminItem.classList.add("active");
+        } else {
+          errorMsg.style.display = "block";
+        }
+      }
+
+      function getChatId(user1, user2) {
+        return [user1, user2].sort().join("_");
+      }
+
+      async function loadUserList() {
+        const userList = document.getElementById("user-list");
+        userList.innerHTML = "<strong>Usuarios</strong>";
+
+        // 🔹 Crear el usuario "Admin (Tú)"
+        const adminDiv = document.createElement("div");
+        adminDiv.classList.add("user-item", "admin-item");
+
+        const adminAvatar = document.createElement("div");
+        adminAvatar.classList.add("user-avatar");
+        adminAvatar.textContent = "🧠";
+
+        const adminName = document.createElement("span");
+        adminName.textContent = `${currentUser} (Tú)`;
+
+        adminDiv.appendChild(adminAvatar);
+        adminDiv.appendChild(adminName);
+
+        adminDiv.onclick = () => {
+          document
+            .querySelectorAll(".user-item")
+            .forEach((el) => el.classList.remove("active"));
+          adminDiv.classList.add("active");
+
+          // Chat personal del admin
+          activeChatWith = "Admin";
+          activeChatId = `${currentUser}_admin`;
+
+          document.getElementById(
+            "chat-header"
+          ).textContent = `${currentUser} (Tú)`;
+          loadMessages(activeChatId);
+        };
+
+        userList.appendChild(adminDiv);
+
+        // 🔹 Cargar el resto de usuarios normales
+        const usersSnap = await getDocs(collection(db, "usuarios"));
+        usersSnap.forEach((u) => {
+          const data = u.data();
+          if (data.nombre !== currentUser) {
+            const div = document.createElement("div");
+            div.classList.add("user-item");
+
+            const avatar = document.createElement("div");
+            avatar.classList.add("user-avatar");
+            avatar.textContent = data.nombre.charAt(0).toUpperCase();
+
+            const name = document.createElement("span");
+            name.textContent = data.nombre;
+
+            div.appendChild(avatar);
+            div.appendChild(name);
+
+            div.onclick = () => {
+              document
+                .querySelectorAll(".user-item")
+                .forEach((el) => el.classList.remove("active"));
+              div.classList.add("active");
+              openPrivateChat(data.nombre);
+            };
+
+            userList.appendChild(div);
+          }
+        });
+      }
+
+      function openPrivateChat(otherUser) {
+        const messagesContainer = document.getElementById("chat-messages");
+        messagesContainer.innerHTML = "";
+        activeChatWith = otherUser;
+        activeChatId = getChatId(currentUser, otherUser);
+
+        document.getElementById(
+          "chat-header"
+        ).textContent = `Chat con ${otherUser}`;
+
+        loadMessages(activeChatId);
+      }
+
+      function loadMessages(chatId) {
+        const messagesContainer = document.getElementById("chat-messages");
+        messagesContainer.innerHTML = "";
+
+        const q = query(
+          collection(db, "chatsPrivados", chatId, "mensajes"),
+          orderBy("timestamp")
+        );
+
+        onSnapshot(q, (snapshot) => {
+          messagesContainer.innerHTML = "";
+
+          const ocultosKey = `${currentUser}_ocultos_${chatId}`;
+          const mensajesOcultos = JSON.parse(
+            localStorage.getItem(ocultosKey) || "[]"
+          );
+
+          let lastDate = null; // 🕓 para saber cuándo insertar separadores
+
+          snapshot.forEach((docSnap) => {
+            const msg = docSnap.data();
+            const msgId = docSnap.id;
+
+            if (mensajesOcultos.includes(msgId)) return;
+
+            const msgDate = msg.timestamp?.toDate
+              ? msg.timestamp.toDate()
+              : new Date(msg.timestamp);
+
+            // --- Separador de fecha ---
+            const msgDayKey = msgDate.toDateString();
+            if (msgDayKey !== lastDate) {
+              lastDate = msgDayKey;
+              const separator = document.createElement("div");
+              separator.classList.add("date-separator");
+              separator.textContent = getDateLabel(msgDate);
+              messagesContainer.appendChild(separator);
+            }
+
+            // --- Mensaje ---
+            const messageElement = document.createElement("div");
+            messageElement.classList.add(
+              "message",
+              msg.usuario === currentUser ? "sent" : "received"
+            );
+            messageElement.dataset.id = msgId;
+
+            // Contenido del mensaje + hora
+            const textSpan = document.createElement("span");
+            textSpan.textContent = msg.texto;
+
+            const timeSpan = document.createElement("span");
+            timeSpan.classList.add("message-time");
+            timeSpan.textContent = formatTime(msgDate);
+
+            messageElement.appendChild(textSpan);
+            messageElement.appendChild(timeSpan);
+
+            // --- Menú contextual eliminar ---
+            messageElement.addEventListener("contextmenu", (e) => {
+              e.preventDefault();
+              const oldMenu = document.querySelector(".context-menu");
+              if (oldMenu) oldMenu.remove();
+
+              const menu = document.createElement("div");
+              menu.classList.add("context-menu");
+              menu.innerHTML = `<button class="menu-delete">🗑️ Eliminar</button>`;
+              document.body.appendChild(menu);
+
+              const rect = messageElement.getBoundingClientRect();
+              menu.style.top = `${rect.bottom + window.scrollY - 10}px`;
+              menu.style.left = `${
+                rect.right + window.scrollX - menu.offsetWidth - 10
+              }px`;
+
+              menu
+                .querySelector(".menu-delete")
+                .addEventListener("click", async () => {
+                  menu.remove();
+
+                  if (msg.usuario === currentUser) {
+                    await deleteDoc(
+                      doc(db, "chatsPrivados", chatId, "mensajes", msgId)
+                    );
+                  } else {
+                    const nuevosOcultos = [...mensajesOcultos, msgId];
+                    localStorage.setItem(
+                      ocultosKey,
+                      JSON.stringify(nuevosOcultos)
+                    );
+                    messageElement.remove();
+                  }
+                });
+
+              document.addEventListener(
+                "click",
+                (ev) => {
+                  if (!menu.contains(ev.target)) menu.remove();
+                },
+                { once: true }
+              );
+            });
+
+            messagesContainer.appendChild(messageElement);
+          });
+
+          messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        });
+      }
+
+      // 🔸 Formato de hora: hh:mm
+      function formatTime(date) {
+        const hours = date.getHours().toString().padStart(2, "0");
+        const minutes = date.getMinutes().toString().padStart(2, "0");
+        return `${hours}:${minutes}`;
+      }
+
+      // 🔸 Texto de fecha: "Hoy", "Ayer" o "23 Octubre 2025"
+      function getDateLabel(date) {
+        const now = new Date();
+        const diffDays = Math.floor(
+          (now.setHours(0, 0, 0, 0) - date.setHours(0, 0, 0, 0)) / 86400000
+        );
+
+        if (diffDays === 0) return "Hoy";
+        if (diffDays === 1) return "Ayer";
+
+        const meses = [
+          "Enero",
+          "Febrero",
+          "Marzo",
+          "Abril",
+          "Mayo",
+          "Junio",
+          "Julio",
+          "Agosto",
+          "Septiembre",
+          "Octubre",
+          "Noviembre",
+          "Diciembre",
+        ];
+        return `${date.getDate()} ${
+          meses[date.getMonth()]
+        } ${date.getFullYear()}`;
+      }
+
+      async function sendMessage() {
+        const messageInput = document.getElementById("message-input");
+        const text = messageInput.value.trim();
+        if (!text || !currentUser || !activeChatId) return;
+
+        // limpiar input de inmediato
+        messageInput.value = "";
+
+        const messageData = {
+          texto: text,
+          usuario: currentUser,
+          timestamp: new Date(),
+        };
+
+        await addDoc(
+          collection(db, "chatsPrivados", activeChatId, "mensajes"),
+          messageData
+        );
+      }
+
+      // enter = enviar
+      window.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+          const loginVisible =
+            document.getElementById("login-container").style.display !== "none";
+          if (loginVisible) login();
+          else sendMessage();
+        }
+      });
+
+      window.addEventListener("load", () => {
+        document.querySelectorAll("input").forEach((i) => (i.value = ""));
+      });
+
+      window.login = login;
+      window.sendMessage = sendMessage;
+    </script>
+  </body>
+</html>
