@@ -266,6 +266,21 @@
         right: 0;
       }
 
+      /* 🟦 Recuadro de inicio de chat */
+      .chat-start {
+        text-align: center;
+        background: #d1ecf1;
+        color: #0c5460;
+        padding: 8px 12px;
+        border-radius: 10px;
+        margin: 10px auto;
+        width: fit-content;
+        max-width: 80%;
+        font-size: 14px;
+        font-weight: 600;
+        font-family: Arial, sans-serif;
+      }
+
       /* 🌙 MODO OSCURO */
       @media (prefers-color-scheme: dark) {
         body {
@@ -408,6 +423,23 @@
         .date-separator::after {
           background: #555;
         }
+
+        /* 🔵 Contador de mensajes no leídos */
+        .unread-badge {
+          background-color: #ff3b30;
+          color: white;
+          border-radius: 50%;
+          padding: 2px 6px;
+          font-size: 12px;
+          font-weight: bold;
+          margin-left: auto;
+          display: none;
+        }
+
+        .chat-start {
+          background: #004d61;
+          color: #b2ebf2;
+        }
       }
     </style>
   </head>
@@ -452,6 +484,7 @@
         query,
         orderBy,
         getDocs,
+        serverTimestamp,
       } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
 
       const firebaseConfig = {
@@ -466,7 +499,7 @@
 
       const app = initializeApp(firebaseConfig);
       const db = getFirestore(app);
-      let currentUser = null;
+      let currentUser = sessionStorage.getItem("currentUser") || null;
       let activeChatId = null;
       let activeChatWith = null;
 
@@ -491,15 +524,14 @@
 
         if (userData.password === password) {
           currentUser = username;
+          sessionStorage.setItem("currentUser", username); // ✅ Guardar sesión temporal
+
           document.getElementById("login-container").style.display = "none";
           document.getElementById("chat-container").style.display = "flex";
-          document.getElementById("chat-header").textContent =
-            "Chat de " + username;
 
-          // Cargar usuarios
           await loadUserList();
+          listenForIncomingMessages();
 
-          // ✅ Abrir automáticamente tu chat personal
           activeChatWith = "Admin";
           activeChatId = `${currentUser}_admin`;
           document.getElementById(
@@ -507,7 +539,6 @@
           ).textContent = `${currentUser} (Tú)`;
           loadMessages(activeChatId);
 
-          // Marcar visualmente el chat activo en el panel
           const adminItem = document.querySelector(".admin-item");
           if (adminItem) adminItem.classList.add("active");
         } else {
@@ -517,6 +548,36 @@
 
       function getChatId(user1, user2) {
         return [user1, user2].sort().join("_");
+      }
+
+      // --- 👂 Escuchar todos los chats donde participa el usuario ---
+      function listenForIncomingMessages() {
+        const usersRef = collection(db, "usuarios");
+
+        getDocs(usersRef).then((snapshot) => {
+          snapshot.forEach((userDoc) => {
+            const user = userDoc.data().nombre;
+            if (user === currentUser) return; // no escuchar tu propio chat
+
+            const chatId = getChatId(currentUser, user);
+            const q = query(
+              collection(db, "chatsPrivados", chatId, "mensajes"),
+              orderBy("timestamp")
+            );
+
+            onSnapshot(q, (snap) => {
+              let unreadCount = 0;
+              snap.forEach((msgDoc) => {
+                const msg = msgDoc.data();
+                // si el mensaje NO es tuyo y NO estás en ese chat
+                if (msg.usuario !== currentUser && activeChatWith !== user) {
+                  unreadCount++;
+                }
+              });
+              updateUnreadBadge(user, unreadCount);
+            });
+          });
+        });
       }
 
       async function loadUserList() {
@@ -573,6 +634,13 @@
             div.appendChild(avatar);
             div.appendChild(name);
 
+            // 🔹 Añadir el círculo de mensajes no leídos
+            const badge = document.createElement("span");
+            badge.classList.add("unread-badge");
+            badge.id = `badge_${data.nombre}`;
+            badge.textContent = "0";
+            div.appendChild(badge);
+
             div.onclick = () => {
               document
                 .querySelectorAll(".user-item")
@@ -586,17 +654,60 @@
         });
       }
 
+      // --- 🔔 Control de mensajes no leídos ---
+      function updateUnreadBadge(user, count) {
+        const badge = document.getElementById(`badge_${user}`);
+        if (!badge) return;
+        if (count > 0) {
+          badge.style.display = "inline-block";
+          badge.textContent = count;
+        } else {
+          badge.style.display = "none";
+        }
+      }
+
       function openPrivateChat(otherUser) {
         const messagesContainer = document.getElementById("chat-messages");
         messagesContainer.innerHTML = "";
         activeChatWith = otherUser;
         activeChatId = getChatId(currentUser, otherUser);
 
-        document.getElementById(
-          "chat-header"
-        ).textContent = `Chat con ${otherUser}`;
+        document.getElementById("chat-header").textContent = `${otherUser}`;
 
         loadMessages(activeChatId);
+        updateUnreadBadge(otherUser, 0);
+      }
+
+      // --- Helper para normalizar timestamps ---
+      function parseTimestamp(ts) {
+        // si es null/undefined -> usar fecha actual (fallback)
+        if (ts === null || ts === undefined) return new Date();
+
+        // si es un Timestamp de Firestore (tiene toDate)
+        if (typeof ts.toDate === "function") {
+          try {
+            return ts.toDate();
+          } catch (e) {
+            // en caso raro, seguir con siguientes comprobaciones
+          }
+        }
+
+        // si es un objeto con seconds (forma serializada)
+        if (typeof ts.seconds === "number") {
+          return new Date(ts.seconds * 1000);
+        }
+
+        // si es un número (milisegundos desde epoch)
+        if (typeof ts === "number") {
+          return new Date(ts);
+        }
+
+        // por si viene como string legible por Date
+        const d = new Date(ts);
+        if (!isNaN(d.getTime())) return d;
+
+        // fallback final: ahora
+        return new Date();
       }
 
       function loadMessages(chatId) {
@@ -610,6 +721,7 @@
 
         onSnapshot(q, (snapshot) => {
           messagesContainer.innerHTML = "";
+          let firstSender = null;
 
           const ocultosKey = `${currentUser}_ocultos_${chatId}`;
           const mensajesOcultos = JSON.parse(
@@ -622,11 +734,16 @@
             const msg = docSnap.data();
             const msgId = docSnap.id;
 
+            if (!firstSender && msg.usuario) {
+              firstSender = msg.usuario;
+            }
+
             if (mensajesOcultos.includes(msgId)) return;
 
-            const msgDate = msg.timestamp?.toDate
-              ? msg.timestamp.toDate()
-              : new Date(msg.timestamp);
+            // 🔸 Esperar hasta que Firestore tenga timestamp real
+            if (!msg.timestamp) return; // si aún es null, lo saltamos por ahora
+
+            const msgDate = parseTimestamp(msg.timestamp);
 
             // --- Separador de fecha ---
             const msgDayKey = msgDate.toDateString();
@@ -705,6 +822,23 @@
             messagesContainer.appendChild(messageElement);
           });
 
+          // 🟦 Mostrar recuadro de inicio del chat si hay mensajes
+          if (firstSender) {
+            const startBox = document.createElement("div");
+            startBox.classList.add("chat-start");
+            startBox.textContent = `Chat comenzado por: ${firstSender}`;
+
+            // Insertarlo al principio del contenedor
+            if (messagesContainer.firstChild) {
+              messagesContainer.insertBefore(
+                startBox,
+                messagesContainer.firstChild
+              );
+            } else {
+              messagesContainer.appendChild(startBox);
+            }
+          }
+
           messagesContainer.scrollTop = messagesContainer.scrollHeight;
         });
       }
@@ -756,13 +890,18 @@
         const messageData = {
           texto: text,
           usuario: currentUser,
-          timestamp: new Date(),
+          timestamp: serverTimestamp(),
         };
 
         await addDoc(
           collection(db, "chatsPrivados", activeChatId, "mensajes"),
           messageData
         );
+
+        // 🔹 Reintentar cargar mensajes 1s después (cuando Firestore ya puso el timestamp real)
+        setTimeout(() => {
+          loadMessages(activeChatId);
+        }, 1000);
       }
 
       // enter = enviar
@@ -777,6 +916,43 @@
 
       window.addEventListener("load", () => {
         document.querySelectorAll("input").forEach((i) => (i.value = ""));
+      });
+
+      // ✅ Mantener sesión si recargas
+      window.addEventListener("load", async () => {
+        if (currentUser) {
+          document.getElementById("login-container").style.display = "none";
+          document.getElementById("chat-container").style.display = "flex";
+
+          await loadUserList();
+          listenForIncomingMessages();
+
+          activeChatWith = "Admin";
+          activeChatId = `${currentUser}_admin`;
+          document.getElementById(
+            "chat-header"
+          ).textContent = `${currentUser} (Tú)`;
+          loadMessages(activeChatId);
+
+          const adminItem = document.querySelector(".admin-item");
+          if (adminItem) adminItem.classList.add("active");
+        } else {
+          document.querySelectorAll("input").forEach((i) => (i.value = ""));
+        }
+      });
+
+      // ✅ Mantener la sesión al recargar, pero borrarla al cerrar la pestaña
+      let unloadTimer;
+
+      document.addEventListener("visibilitychange", () => {
+        if (document.visibilityState === "hidden") {
+          // Si después de 1 segundo la pestaña sigue oculta, la consideramos cerrada
+          unloadTimer = setTimeout(() => {
+            sessionStorage.removeItem("currentUser");
+          }, 1000);
+        } else {
+          clearTimeout(unloadTimer); // Si el usuario vuelve rápido (recarga o cambio de pestaña), no se borra
+        }
       });
 
       window.login = login;
