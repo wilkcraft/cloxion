@@ -64,10 +64,15 @@
       }
 
       .chat-container {
-        display: none;
-        width: 98vw;
-        max-width: 800px;
+        display: none; /* por defecto está oculto */
         height: 98vh;
+        max-width: 100vw; /* que nunca supere la pantalla */
+        margin-left: 0;
+        flex-direction: column;
+        background-color: white;
+        border-radius: 8px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
       }
 
       .chat-header {
@@ -281,6 +286,61 @@
         font-family: Arial, sans-serif;
       }
 
+      #toggle-user-list {
+        display: none;
+      }
+
+      @media (min-width: 769px) {
+        .chat-container {
+          margin-left: 220px; /* ancho de .user-list */
+          max-width: calc(100vw - 220px); /* no sobresalir de la pantalla */
+        }
+      }
+
+      /* Ocultar la lista de usuarios en móvil */
+      @media (max-width: 768px) {
+        .chat-container {
+          margin-left: 0;
+          max-width: 100vw;
+          width: 100%;
+        }
+
+        .user-list {
+          display: none;
+          position: fixed;
+          left: 0;
+          top: 0;
+          height: 100%;
+          z-index: 100;
+          background: #ffffff;
+          box-shadow: 2px 0 6px rgba(0, 0, 0, 0.2);
+          transition: transform 0.3s ease;
+          transform: translateX(-100%);
+        }
+
+        .user-list.show {
+          transform: translateX(0);
+          display: flex;
+        }
+
+        /* Botón para abrir/cerrar menú */
+        #toggle-user-list {
+          display: block;
+          position: fixed;
+          top: 15px;
+          left: 15px;
+          z-index: 150;
+          background-color: #00bcd4;
+          border: none;
+          color: white;
+          padding: 10px;
+          border-radius: 50%;
+          font-size: 18px;
+          cursor: pointer;
+          box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+        }
+      }
+
       /* 🌙 MODO OSCURO */
       @media (prefers-color-scheme: dark) {
         body {
@@ -457,6 +517,7 @@
 
     <!-- CHAT -->
     <div class="chat-container" id="chat-container">
+      <button id="toggle-user-list">☰</button>
       <div class="user-list" id="user-list"></div>
       <div class="chat-header" id="chat-header">Chat</div>
       <div class="chat-messages" id="chat-messages"></div>
@@ -482,6 +543,7 @@
         deleteDoc,
         onSnapshot,
         query,
+        where, // 👈 Añade esta línea
         orderBy,
         getDocs,
         serverTimestamp,
@@ -557,11 +619,12 @@
         getDocs(usersRef).then((snapshot) => {
           snapshot.forEach((userDoc) => {
             const user = userDoc.data().nombre;
-            if (user === currentUser) return; // no escuchar tu propio chat
+            if (user === currentUser) return;
 
             const chatId = getChatId(currentUser, user);
             const q = query(
               collection(db, "chatsPrivados", chatId, "mensajes"),
+              where("timestamp", "!=", null),
               orderBy("timestamp")
             );
 
@@ -569,8 +632,11 @@
               let unreadCount = 0;
               snap.forEach((msgDoc) => {
                 const msg = msgDoc.data();
-                // si el mensaje NO es tuyo y NO estás en ese chat
-                if (msg.usuario !== currentUser && activeChatWith !== user) {
+                if (
+                  msg.usuario !== currentUser &&
+                  msg.check !== true &&
+                  activeChatWith !== user
+                ) {
                   unreadCount++;
                 }
               });
@@ -666,47 +732,52 @@
         }
       }
 
-      function openPrivateChat(otherUser) {
+      async function openPrivateChat(otherUser) {
         const messagesContainer = document.getElementById("chat-messages");
         messagesContainer.innerHTML = "";
         activeChatWith = otherUser;
         activeChatId = getChatId(currentUser, otherUser);
 
         document.getElementById("chat-header").textContent = `${otherUser}`;
-
         loadMessages(activeChatId);
         updateUnreadBadge(otherUser, 0);
+
+        // 🟩 Marcar como leídos los mensajes recibidos
+        const chatRef = collection(
+          db,
+          "chatsPrivados",
+          activeChatId,
+          "mensajes"
+        );
+        const mensajesSnap = await getDocs(chatRef);
+
+        mensajesSnap.forEach(async (msgDoc) => {
+          const msg = msgDoc.data();
+          if (msg.usuario !== currentUser && msg.check !== true) {
+            await setDoc(msgDoc.ref, { check: true }, { merge: true });
+          }
+        });
       }
 
       // --- Helper para normalizar timestamps ---
       function parseTimestamp(ts) {
-        // si es null/undefined -> usar fecha actual (fallback)
-        if (ts === null || ts === undefined) return new Date();
+        if (!ts) return new Date();
 
-        // si es un Timestamp de Firestore (tiene toDate)
-        if (typeof ts.toDate === "function") {
+        // Si ya es un objeto Firestore Timestamp
+        if (typeof ts.toDate === "function") return ts.toDate();
+
+        // Si es un string tipo "31 de octubre de 2025, 6:53:57 p.m. UTC+1"
+        if (typeof ts === "string") {
+          // Intentar convertirlo a fecha con Date.parse no funcionará siempre, así que lo forzamos:
           try {
-            return ts.toDate();
-          } catch (e) {
-            // en caso raro, seguir con siguientes comprobaciones
-          }
+            // Eliminamos caracteres raros como el " " (espacio fino)
+            const limpio = ts.replace(/\u202f/g, " ").replace(" ", " ");
+            const fecha = new Date(limpio);
+            if (!isNaN(fecha.getTime())) return fecha;
+          } catch (e) {}
         }
 
-        // si es un objeto con seconds (forma serializada)
-        if (typeof ts.seconds === "number") {
-          return new Date(ts.seconds * 1000);
-        }
-
-        // si es un número (milisegundos desde epoch)
-        if (typeof ts === "number") {
-          return new Date(ts);
-        }
-
-        // por si viene como string legible por Date
-        const d = new Date(ts);
-        if (!isNaN(d.getTime())) return d;
-
-        // fallback final: ahora
+        // Si nada funcionó, usar fecha actual
         return new Date();
       }
 
@@ -716,6 +787,7 @@
 
         const q = query(
           collection(db, "chatsPrivados", chatId, "mensajes"),
+          where("timestamp", "!=", null),
           orderBy("timestamp")
         );
 
@@ -744,6 +816,7 @@
             if (!msg.timestamp) return; // si aún es null, lo saltamos por ahora
 
             const msgDate = parseTimestamp(msg.timestamp);
+            const fechaMostrar = msg.fechaTexto || msg.timestamp;
 
             // --- Separador de fecha ---
             const msgDayKey = msgDate.toDateString();
@@ -769,7 +842,11 @@
 
             const timeSpan = document.createElement("span");
             timeSpan.classList.add("message-time");
-            timeSpan.textContent = formatTime(msgDate);
+            timeSpan.textContent =
+              typeof fechaMostrar === "string"
+                ? fechaMostrar.split(",")[1]?.trim()?.slice(0, 5) ||
+                  formatTime(msgDate)
+                : formatTime(msgDate);
 
             messageElement.appendChild(textSpan);
             messageElement.appendChild(timeSpan);
@@ -884,24 +961,52 @@
         const text = messageInput.value.trim();
         if (!text || !currentUser || !activeChatId) return;
 
-        // limpiar input de inmediato
         messageInput.value = "";
+
+        const fecha = new Date();
+        const fechaLegible = fecha.toLocaleString("es-ES", {
+          dateStyle: "long",
+          timeStyle: "medium",
+        });
 
         const messageData = {
           texto: text,
           usuario: currentUser,
           timestamp: serverTimestamp(),
+          fechaTexto: fechaLegible,
+          check: false,
         };
 
+        // --- Mostrar mensaje localmente al instante
+        const messagesContainer = document.getElementById("chat-messages");
+        const tempMessage = document.createElement("div");
+        tempMessage.classList.add("message", "sent");
+        tempMessage.innerHTML = `
+    <span>${text}</span>
+    <span class="message-time">${fechaLegible
+      .split(",")[1]
+      ?.trim()
+      ?.slice(0, 5)}</span>
+  `;
+        messagesContainer.appendChild(tempMessage);
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+
+        const chatRef = doc(db, "chatsPrivados", activeChatId);
+        const chatSnap = await getDoc(chatRef);
+        if (!chatSnap.exists()) {
+          await setDoc(chatRef, {
+            participantes: [currentUser, activeChatWith],
+            creado: new Date().toISOString(),
+          });
+        }
+
+        console.log("📩 Enviando a:", activeChatId);
+
+        // --- Guardar en Firestore
         await addDoc(
           collection(db, "chatsPrivados", activeChatId, "mensajes"),
           messageData
         );
-
-        // 🔹 Reintentar cargar mensajes 1s después (cuando Firestore ya puso el timestamp real)
-        setTimeout(() => {
-          loadMessages(activeChatId);
-        }, 1000);
       }
 
       // enter = enviar
@@ -957,6 +1062,25 @@
 
       window.login = login;
       window.sendMessage = sendMessage;
+
+      const toggleButton = document.getElementById("toggle-user-list");
+      const userList = document.getElementById("user-list");
+
+      toggleButton.addEventListener("click", () => {
+        userList.classList.toggle("show");
+      });
+
+      // Cerrar menú al seleccionar un usuario en móvil
+      document.addEventListener("click", (e) => {
+        if (window.innerWidth <= 768) {
+          if (
+            e.target.classList.contains("user-item") ||
+            e.target.closest(".user-item")
+          ) {
+            userList.classList.remove("show");
+          }
+        }
+      });
     </script>
   </body>
 </html>
