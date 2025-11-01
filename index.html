@@ -83,6 +83,14 @@
         width: 100%;
       }
 
+      .menu-icon {
+        margin-right: 8px;
+        cursor: pointer;
+        font-size: 22px;
+        color: white;
+        vertical-align: middle;
+      }
+
       .chat-messages {
         flex-grow: 1;
         overflow-y: auto;
@@ -295,6 +303,10 @@
           margin-left: 220px; /* ancho de .user-list */
           max-width: calc(100vw - 220px); /* no sobresalir de la pantalla */
         }
+
+        #toggle-user-list {
+          display: none !important; /* Ocultamos el botón flotante */
+        }
       }
 
       /* Ocultar la lista de usuarios en móvil */
@@ -325,19 +337,11 @@
 
         /* Botón para abrir/cerrar menú */
         #toggle-user-list {
-          display: block;
-          position: fixed;
-          top: 15px;
-          left: 15px;
-          z-index: 150;
-          background-color: #00bcd4;
-          border: none;
-          color: white;
-          padding: 10px;
-          border-radius: 50%;
-          font-size: 18px;
-          cursor: pointer;
-          box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+          display: none !important; /* Ocultamos el botón flotante */
+        }
+
+        .chat-input {
+          bottom: 0; /* ✅ evita que se esconda */
         }
       }
 
@@ -596,10 +600,10 @@
 
           activeChatWith = "Admin";
           activeChatId = `${currentUser}_admin`;
-          document.getElementById(
-            "chat-header"
-          ).textContent = `${currentUser} (Tú)`;
+          updateChatHeader(`${currentUser} (Tú)`);
           loadMessages(activeChatId);
+
+          sessionStorage.setItem("lastChatWith", "Admin"); // 🟩 Guardar si está en su propio chat
 
           const adminItem = document.querySelector(".admin-item");
           if (adminItem) adminItem.classList.add("active");
@@ -653,6 +657,7 @@
         // 🔹 Crear el usuario "Admin (Tú)"
         const adminDiv = document.createElement("div");
         adminDiv.classList.add("user-item", "admin-item");
+        adminDiv.dataset.name = currentUser; // ✅ Guardar el nombre real del usuario
 
         const adminAvatar = document.createElement("div");
         adminAvatar.classList.add("user-avatar");
@@ -674,10 +679,10 @@
           activeChatWith = "Admin";
           activeChatId = `${currentUser}_admin`;
 
-          document.getElementById(
-            "chat-header"
-          ).textContent = `${currentUser} (Tú)`;
+          updateChatHeader(`${currentUser} (Tú)`);
           loadMessages(activeChatId);
+
+          closeMenuOnMobile(); // 👈 cerrar menú al hacer clic
         };
 
         userList.appendChild(adminDiv);
@@ -689,6 +694,7 @@
           if (data.nombre !== currentUser) {
             const div = document.createElement("div");
             div.classList.add("user-item");
+            div.dataset.name = data.nombre; // ✅ Guardar el nombre del usuario
 
             const avatar = document.createElement("div");
             avatar.classList.add("user-avatar");
@@ -713,6 +719,7 @@
                 .forEach((el) => el.classList.remove("active"));
               div.classList.add("active");
               openPrivateChat(data.nombre);
+              closeMenuOnMobile(); // 👈 cerrar menú al hacer clic
             };
 
             userList.appendChild(div);
@@ -736,9 +743,18 @@
         const messagesContainer = document.getElementById("chat-messages");
         messagesContainer.innerHTML = "";
         activeChatWith = otherUser;
+        // ✅ Marcar visualmente el contacto activo
+        document
+          .querySelectorAll(".user-item")
+          .forEach((el) => el.classList.remove("active"));
+        const currentDiv = [...document.querySelectorAll(".user-item")].find(
+          (d) => d.dataset.name === otherUser
+        );
+        if (currentDiv) currentDiv.classList.add("active");
+
         activeChatId = getChatId(currentUser, otherUser);
 
-        document.getElementById("chat-header").textContent = `${otherUser}`;
+        updateChatHeader(`${otherUser}`);
         loadMessages(activeChatId);
         updateUnreadBadge(otherUser, 0);
 
@@ -757,6 +773,8 @@
             await setDoc(msgDoc.ref, { check: true }, { merge: true });
           }
         });
+
+        sessionStorage.setItem("lastChatWith", otherUser); // 🟩 Guardar contacto activo
       }
 
       // --- Helper para normalizar timestamps ---
@@ -790,6 +808,22 @@
           where("timestamp", "!=", null),
           orderBy("timestamp")
         );
+
+        // 🟩 Restaurar scroll si existe
+        const savedScroll = sessionStorage.getItem(`scroll_${chatId}`);
+        if (savedScroll) {
+          setTimeout(() => {
+            messagesContainer.scrollTop = parseInt(savedScroll);
+          }, 200);
+        }
+
+        // 🟩 Guardar posición del scroll en tiempo real
+        messagesContainer.addEventListener("scroll", () => {
+          sessionStorage.setItem(
+            `scroll_${chatId}`,
+            messagesContainer.scrollTop
+          );
+        });
 
         onSnapshot(q, (snapshot) => {
           messagesContainer.innerHTML = "";
@@ -1023,27 +1057,79 @@
         document.querySelectorAll("input").forEach((i) => (i.value = ""));
       });
 
-      // ✅ Mantener sesión si recargas
-      window.addEventListener("load", async () => {
-        if (currentUser) {
-          document.getElementById("login-container").style.display = "none";
-          document.getElementById("chat-container").style.display = "flex";
+      // 🔹 Función para insertar el ☰ si estamos en móvil
+      function ensureMenuIcon() {
+        if (window.innerWidth <= 768) {
+          if (!chatHeader.querySelector(".menu-icon")) {
+            const menuIcon = document.createElement("span");
+            menuIcon.textContent = "☰";
+            menuIcon.classList.add("menu-icon");
+            chatHeader.prepend(menuIcon);
 
-          await loadUserList();
-          listenForIncomingMessages();
-
-          activeChatWith = "Admin";
-          activeChatId = `${currentUser}_admin`;
-          document.getElementById(
-            "chat-header"
-          ).textContent = `${currentUser} (Tú)`;
-          loadMessages(activeChatId);
-
-          const adminItem = document.querySelector(".admin-item");
-          if (adminItem) adminItem.classList.add("active");
+            menuIcon.addEventListener("click", () => {
+              userList.classList.toggle("show");
+            });
+          }
         } else {
-          document.querySelectorAll("input").forEach((i) => (i.value = ""));
+          // Si volvemos a escritorio, quitar el icono
+          const icon = chatHeader.querySelector(".menu-icon");
+          if (icon) icon.remove();
         }
+      }
+
+      // ✅ Mantener sesión si recargas (estable en móvil y escritorio)
+      window.addEventListener("load", async () => {
+        document.querySelectorAll("input").forEach((i) => (i.value = ""));
+
+        currentUser = sessionStorage.getItem("currentUser");
+        if (!currentUser) return;
+
+        // Mostrar interfaz de chat
+        document.getElementById("login-container").style.display = "none";
+        document.getElementById("chat-container").style.display = "flex";
+
+        // Aseguramos que el menú está cerrado al inicio
+        userList.classList.remove("show");
+
+        // Cargamos los usuarios antes de restaurar el chat
+        await loadUserList();
+        listenForIncomingMessages();
+
+        // Esperamos un poco para asegurar que la lista se renderiza correctamente
+        const lastChat = sessionStorage.getItem("lastChatWith") || "Admin";
+
+        const restoreChat = async () => {
+          const userItems = document.querySelectorAll(".user-item");
+          if (userItems.length === 0) return setTimeout(restoreChat, 100);
+
+          // ✅ Si es un chat con otro usuario
+          if (lastChat && lastChat !== "Admin") {
+            await openPrivateChat(lastChat);
+          } else {
+            // ✅ Chat personal del usuario
+            activeChatWith = "Admin";
+            activeChatId = `${currentUser}_admin`;
+            updateChatHeader(`${currentUser} (Tú)`);
+            loadMessages(activeChatId);
+            sessionStorage.setItem("lastChatWith", "Admin");
+          }
+
+          // ✅ Marcar el contacto activo visualmente
+          document
+            .querySelectorAll(".user-item")
+            .forEach((el) => el.classList.remove("active"));
+          const targetName = lastChat === "Admin" ? currentUser : lastChat;
+          const activeUser = [...document.querySelectorAll(".user-item")].find(
+            (d) => d.dataset.name === targetName
+          );
+          if (activeUser) activeUser.classList.add("active");
+
+          // ✅ Volver a colocar el botón ☰ en móvil
+          ensureMenuIcon();
+        };
+
+        // Ejecutar restauración después de 400ms para móviles lentos
+        setTimeout(restoreChat, 400);
       });
 
       // ✅ Mantener la sesión al recargar, pero borrarla al cerrar la pestaña
@@ -1053,7 +1139,8 @@
         if (document.visibilityState === "hidden") {
           // Si después de 1 segundo la pestaña sigue oculta, la consideramos cerrada
           unloadTimer = setTimeout(() => {
-            sessionStorage.removeItem("currentUser");
+            // 🧹 Limpiar toda la información temporal (usuario, chat activo, scroll, etc.)
+            sessionStorage.clear();
           }, 1000);
         } else {
           clearTimeout(unloadTimer); // Si el usuario vuelve rápido (recarga o cambio de pestaña), no se borra
@@ -1065,20 +1152,53 @@
 
       const toggleButton = document.getElementById("toggle-user-list");
       const userList = document.getElementById("user-list");
+      const chatHeader = document.getElementById("chat-header");
 
-      toggleButton.addEventListener("click", () => {
-        userList.classList.toggle("show");
-      });
+      // 👂 Insertar el icono al cargar y al redimensionar
+      window.addEventListener("resize", ensureMenuIcon);
 
-      // Cerrar menú al seleccionar un usuario en móvil
-      document.addEventListener("click", (e) => {
+      // 👂 Cada vez que se cambie de chat o se actualice el header, volver a poner el ☰
+      const originalSetText = (text) => {
+        chatHeader.textContent = text;
+        ensureMenuIcon();
+      };
+
+      // 🔸 Sobrescribimos los lugares donde se cambia el encabezado
+      window.updateChatHeader = (name) => {
+        chatHeader.textContent = name;
+        ensureMenuIcon();
+      };
+
+      function updateChatHeader(name) {
+        const chatHeader = document.getElementById("chat-header");
+        chatHeader.textContent = name;
+        ensureMenuIcon(); // vuelve a añadir el ☰ si estamos en móvil
+      }
+
+      // Luego cambia las líneas como esta:
+      document.getElementById(
+        "chat-header"
+      ).textContent = `${currentUser} (Tú)`;
+      // por esto:
+      updateChatHeader(`${currentUser} (Tú)`);
+
+      // Y esta:
+      document.getElementById("chat-header").textContent = `${otherUser}`;
+      // por esto:
+      updateChatHeader(`${otherUser}`);
+
+      // ✅ Cerrar el menú de contactos automáticamente en móvil al abrir un chat
+      function closeMenuOnMobile() {
         if (window.innerWidth <= 768) {
-          if (
-            e.target.classList.contains("user-item") ||
-            e.target.closest(".user-item")
-          ) {
-            userList.classList.remove("show");
-          }
+          userList.classList.remove("show");
+        }
+      }
+
+      // Escuchamos los clics en cada contacto cuando se cargan
+      document.addEventListener("click", (e) => {
+        const userItem = e.target.closest(".user-item");
+        if (userItem) {
+          closeMenuOnMobile();
         }
       });
     </script>
