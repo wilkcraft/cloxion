@@ -314,6 +314,8 @@
         body {
           height: 100%;
           overflow: hidden;
+          justify-content: flex-start;
+          align-items: stretch;
         }
 
         .chat-container {
@@ -321,6 +323,7 @@
           max-height: 100dvh;
           flex-direction: column;
           overflow: hidden;
+          padding-top: 0;
         }
 
         .chat-messages {
@@ -329,6 +332,7 @@
         }
 
         .chat-header {
+          margin-top: 0;
           flex-shrink: 0;
           position: sticky;
           top: 0;
