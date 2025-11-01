@@ -311,10 +311,36 @@
 
       /* Ocultar la lista de usuarios en móvil */
       @media (max-width: 768px) {
+        body {
+          height: 100%;
+          overflow: hidden;
+        }
+
         .chat-container {
-          margin-left: 0;
-          max-width: 100vw;
-          width: 100%;
+          height: 100dvh; /* Usa la nueva unidad dinámica del viewport móvil */
+          max-height: 100dvh;
+          display: flex;
+          flex-direction: column;
+          overflow: hidden;
+        }
+
+        .chat-messages {
+          flex: 1;
+          overflow-y: auto;
+        }
+
+        .chat-header {
+          flex-shrink: 0;
+          position: sticky;
+          top: 0;
+          z-index: 10;
+        }
+
+        .chat-input {
+          flex-shrink: 0;
+          position: sticky;
+          bottom: 0;
+          z-index: 10;
         }
 
         .user-list {
@@ -338,10 +364,6 @@
         /* Botón para abrir/cerrar menú */
         #toggle-user-list {
           display: none !important; /* Ocultamos el botón flotante */
-        }
-
-        .chat-input {
-          bottom: 0; /* ✅ evita que se esconda */
         }
       }
 
