@@ -77,11 +77,41 @@
       .chat-header {
         background-color: #00bcd4;
         color: white;
-        padding: 15px;
+        padding: 10px 15px;
         font-weight: bold;
         width: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
       }
 
+      .chat-header-top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+
+      .chat-status {
+        font-size: 13px;
+        font-weight: 500;
+        color: #e0f7fa;
+        margin-top: 2px;
+        text-shadow: 0 0 3px rgba(0, 0, 0, 0.2);
+        animation: fadeStatus 0.3s ease-in-out;
+      }
+
+      /* Animación suave al actualizar estado */
+      @keyframes fadeStatus {
+        from {
+          opacity: 0;
+          transform: translateY(-3px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
       .menu-icon {
         margin-right: 8px;
         cursor: pointer;
@@ -326,6 +356,165 @@
 
       .chat-messages.scroll-down {
         animation: scrollDown 0.3s ease-out;
+      }
+
+      /* === LOGO Cloxion === */
+      .cloxion-modern {
+        font-weight: 700;
+        font-size: 30px;
+        letter-spacing: 1.5px;
+        position: relative;
+        color: #0a0f12; /* texto oscuro */
+        text-align: center;
+        font-family: "Poppins", "Inter", system-ui, sans-serif;
+        margin-bottom: 8px;
+      }
+
+      .cloxion-modern .c {
+        position: relative; /* necesario para que el ::before se posicione correctamente */
+        display: inline-block;
+      }
+
+      .cloxion-modern .c::before {
+        content: "";
+        position: absolute;
+        top: -5px;
+        left: -6px;
+        width: 9px;
+        height: 9px;
+        background: radial-gradient(circle, #00bcd4 0%, #0097a7 80%);
+        box-shadow: 0 0 4px rgba(0, 188, 212, 0.5);
+        border-radius: 50%;
+      }
+
+      .cloxion-modern .x {
+        color: #00bcd4;
+        position: relative;
+      }
+
+      .cloxion-modern .x::after {
+        content: "";
+        position: absolute;
+        left: 0;
+        right: 0;
+        top: 50%;
+        height: 2px;
+        background: linear-gradient(45deg, #00bcd4, #00a3c4);
+        transform: rotate(45deg);
+        opacity: 0.8;
+      }
+
+      /* === Isotipo === */
+      .cloxion-x {
+        position: relative;
+        width: 60px;
+        height: 60px;
+        background: radial-gradient(circle at 50% 50%, #00c4d4, #008ba3 85%);
+        border-radius: 22%;
+        box-shadow: inset 0 0 10px rgba(255, 255, 255, 0.2),
+          0 0 18px rgba(0, 188, 212, 0.3);
+        overflow: hidden;
+      }
+
+      /* Líneas diagonales */
+      .cloxion-x::before,
+      .cloxion-x::after {
+        content: "";
+        position: absolute;
+        top: 45%;
+        left: -25%;
+        width: 150%;
+        height: 6px;
+        border-radius: 6px;
+        background: linear-gradient(
+          90deg,
+          transparent,
+          #ffffff 40%,
+          transparent
+        );
+        opacity: 0.85;
+      }
+      .cloxion-x::before {
+        transform: rotate(45deg);
+      }
+      .cloxion-x::after {
+        transform: rotate(-45deg);
+      }
+
+      /* Núcleo central */
+      .cloxion-x .core {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        transform: translate(-50%, -50%);
+        background: radial-gradient(circle, #ffffff, #b2ebf2 60%, #00bcd4 100%);
+        box-shadow: 0 0 12px rgba(255, 255, 255, 0.9),
+          0 0 20px rgba(0, 188, 212, 0.5);
+      }
+
+      /* Pulso */
+      @keyframes pulseCore {
+        0%,
+        100% {
+          transform: translate(-50%, -50%) scale(1);
+        }
+        50% {
+          transform: translate(-50%, -50%) scale(1.15);
+        }
+      }
+
+      /* Órbita */
+      .cloxion-x .orbit {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 135%;
+        height: 135%;
+        border-radius: 50%;
+        border: 1.5px solid rgba(255, 255, 255, 0.4);
+        transform: translate(-50%, -50%);
+        animation: rotateOrbit 7s linear infinite;
+      }
+      @keyframes rotateOrbit {
+        from {
+          transform: translate(-50%, -50%) rotate(0deg);
+        }
+        to {
+          transform: translate(-50%, -50%) rotate(360deg);
+        }
+      }
+
+      /* Satélite */
+      .cloxion-x .satellite {
+        position: absolute;
+        top: 0%;
+        left: 50%;
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: radial-gradient(circle, #fff, #b2ebf2);
+        transform: translate(-50%, -50%);
+        box-shadow: 0 0 6px rgba(255, 255, 255, 0.8);
+      }
+
+      .cloxion-header {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        margin-bottom: 12px;
+      }
+
+      .cloxion-header .cloxion-icon {
+        margin: 0; /* quitar márgenes que lo desalineaban verticalmente */
+      }
+
+      .cloxion-header .cloxion-modern {
+        margin: 0;
+        text-align: left;
       }
 
       @media (min-width: 769px) {
@@ -589,6 +778,47 @@
           background: #004d61;
           color: #b2ebf2;
         }
+
+        .cloxion-modern {
+          color: #e0f7fa;
+        }
+
+        .cloxion-modern .x {
+          color: #03818f; /* azul más brillante para la “x” */
+        }
+
+        .cloxion-modern .c::before {
+          background: #03818f; /* punto brillante */
+        }
+
+        .cloxion-modern .x::after {
+          background: linear-gradient(45deg, #00e5ff, #00acc1);
+          opacity: 0.9;
+        }
+
+        .cloxion-x {
+          background: radial-gradient(circle at 50% 50%, #0097a7, #003c4f 85%);
+          box-shadow: inset 0 0 10px rgba(255, 255, 255, 0.1),
+            0 0 22px rgba(0, 229, 255, 0.25);
+        }
+        .cloxion-x::before,
+        .cloxion-x::after {
+          background: linear-gradient(
+            90deg,
+            transparent,
+            #00e5ff 40%,
+            transparent
+          );
+        }
+        .cloxion-x .core {
+          background: radial-gradient(circle, #00e5ff, #00acc1 70%, #006978);
+          box-shadow: 0 0 14px rgba(0, 229, 255, 0.8),
+            0 0 28px rgba(0, 229, 255, 0.5);
+        }
+
+        .chat-status {
+          color: #b2ebf2;
+        }
       }
     </style>
   </head>
@@ -607,9 +837,25 @@
     <!-- CHAT -->
     <div class="chat-container" id="chat-container">
       <button id="toggle-user-list">☰</button>
-      <div class="user-list" id="user-list"></div>
+      <div class="user-list" id="user-list">
+        <!-- === Logo Cloxion con isotipo === -->
+        <div class="cloxion-header">
+          <div class="cloxion-x" aria-hidden="true">
+            <div class="core"></div>
+          </div>
+          <div class="cloxion-modern">
+            <span class="c">C</span>lo<span class="x">x</span>ion
+          </div>
+        </div>
+      </div>
+
       <div class="overlay" id="overlay"></div>
-      <div class="chat-header" id="chat-header">Chat</div>
+      <div class="chat-header" id="chat-header">
+        <div class="chat-header-top">
+          <span id="chat-name">Chat</span>
+        </div>
+        <div id="chat-status" class="chat-status"></div>
+      </div>
       <div class="chat-messages" id="chat-messages"></div>
       <div class="chat-input">
         <input
@@ -633,11 +879,17 @@
         deleteDoc,
         onSnapshot,
         query,
-        where, // 👈 Añade esta línea
+        where,
         orderBy,
         getDocs,
         serverTimestamp,
       } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+
+      import {
+        getMessaging,
+        getToken,
+        onMessage,
+      } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-messaging.js";
 
       const firebaseConfig = {
         apiKey: "AIzaSyDLKdKtSocG9hLs8mSggXl0cL4MRcpsW5A",
@@ -651,6 +903,48 @@
 
       const app = initializeApp(firebaseConfig);
       const db = getFirestore(app);
+
+      // === 🔔 Configurar Firebase Cloud Messaging ===
+      const messaging = getMessaging(app);
+
+      // Registrar el service worker
+      if ("serviceWorker" in navigator) {
+        navigator.serviceWorker
+          .register("/firebase-messaging-sw.js")
+          .then((reg) => console.log("✅ Service Worker registrado:", reg))
+          .catch((err) => console.error("❌ Error al registrar SW:", err));
+      }
+
+      async function requestPermissionAndSaveToken() {
+        try {
+          const status = await Notification.requestPermission();
+          if (status === "granted") {
+            const token = await getToken(messaging, {
+              vapidKey:
+                "BB7-A6qer7T-AHiBlLDzHMUSQS8h9n5HzL3uWVWgL058042_VWlJW0D32wrZZUCRpjHS6c3yUOS5fCR-bU_yGmg", // ⚠️ cambia esto por tu clave pública de Firebase
+            });
+            if (token && currentUser) {
+              await setDoc(
+                doc(db, "usuarios", currentUser),
+                { token },
+                { merge: true }
+              );
+              console.log("🔔 Token guardado:", token);
+            }
+          } else {
+            console.warn("❌ Permiso de notificaciones denegado");
+          }
+        } catch (e) {
+          console.error("Error al obtener token:", e);
+        }
+      }
+
+      // Mostrar notificaciones cuando la web está abierta
+      onMessage(messaging, (payload) => {
+        const { title, body } = payload.notification;
+        new Notification(title, { body });
+      });
+
       let currentUser = sessionStorage.getItem("currentUser") || null;
       let activeChatId = null;
       let activeChatWith = null;
@@ -676,6 +970,17 @@
 
         if (userData.password === password) {
           currentUser = username;
+
+          // 🟢 Marcar usuario en línea
+          await setDoc(
+            doc(db, "usuarios", username),
+            {
+              online: true,
+              ultimoAcceso: serverTimestamp(),
+            },
+            { merge: true }
+          );
+
           sessionStorage.setItem("currentUser", username); // ✅ Guardar sesión temporal
 
           document.getElementById("login-container").style.display = "none";
@@ -684,8 +989,11 @@
           await loadUserList();
           listenForIncomingMessages();
 
-          activeChatWith = "Admin";
-          activeChatId = `${currentUser}_admin`;
+          // 🟦 Activar notificaciones push
+          await requestPermissionAndSaveToken();
+
+          activeChatWith = currentUser;
+          activeChatId = `${currentUser}_self`; // chat consigo mismo
           updateChatHeader(`${currentUser} (Tú)`);
           loadMessages(activeChatId);
 
@@ -697,6 +1005,17 @@
           errorMsg.style.display = "block";
         }
       }
+
+      // 🔁 Actualizar presencia cada 5 segundos
+      setInterval(async () => {
+        if (currentUser) {
+          await setDoc(
+            doc(db, "usuarios", currentUser),
+            { ultimoPing: Date.now() },
+            { merge: true }
+          );
+        }
+      }, 5000);
 
       function getChatId(user1, user2) {
         return [user1, user2].sort().join("_");
@@ -761,14 +1080,14 @@
             .forEach((el) => el.classList.remove("active"));
           adminDiv.classList.add("active");
 
-          // Chat personal del admin
-          activeChatWith = "Admin";
-          activeChatId = `${currentUser}_admin`;
+          // Chat personal del usuario
+          activeChatWith = currentUser;
+          activeChatId = `${currentUser}_self`;
 
           updateChatHeader(`${currentUser} (Tú)`);
           loadMessages(activeChatId);
 
-          closeMenuOnMobile(); // 👈 cerrar menú al hacer clic
+          closeMenuOnMobile();
         };
 
         userList.appendChild(adminDiv);
@@ -878,6 +1197,7 @@
         activeChatId = getChatId(currentUser, otherUser);
 
         updateChatHeader(`${otherUser}`);
+        listenTypingStatus(otherUser);
         loadMessages(activeChatId);
         updateUnreadBadge(otherUser, 0);
 
@@ -1118,12 +1438,6 @@
         const text = messageInput.value.trim();
         if (!text || !currentUser || !activeChatId) return;
 
-        // ❌ Evitar que usuarios distintos de Miguel envíen mensajes al Admin
-        if (activeChatWith === "Admin" && currentUser !== "Miguel") {
-          alert("No tienes permiso para chatear con el Admin.");
-          return;
-        }
-
         messageInput.value = "";
 
         const fecha = new Date();
@@ -1145,12 +1459,12 @@
         const tempMessage = document.createElement("div");
         tempMessage.classList.add("message", "sent");
         tempMessage.innerHTML = `
-    <span>${text}</span>
-    <span class="message-time">${fechaLegible
-      .split(",")[1]
-      ?.trim()
-      ?.slice(0, 5)}</span>
-  `;
+      <span>${text}</span>
+      <span class="message-time">${fechaLegible
+        .split(",")[1]
+        ?.trim()
+        ?.slice(0, 5)}</span>
+    `;
         messagesContainer.appendChild(tempMessage);
         messagesContainer.scrollTop = messagesContainer.scrollHeight;
 
@@ -1256,11 +1570,11 @@
             await openPrivateChat(lastChat);
           } else {
             // ✅ Chat personal del usuario
-            activeChatWith = "Admin";
-            activeChatId = `${currentUser}_admin`;
+            activeChatWith = currentUser;
+            activeChatId = `${currentUser}_self`;
             updateChatHeader(`${currentUser} (Tú)`);
             loadMessages(activeChatId);
-            sessionStorage.setItem("lastChatWith", "Admin");
+            sessionStorage.setItem("lastChatWith", currentUser);
           }
 
           // ✅ Marcar el contacto activo visualmente
@@ -1296,6 +1610,69 @@
         }
       });
 
+      // === ✍️ Indicador de "escribiendo..." ===
+      let typingTimeout;
+      const messageInput = document.getElementById("message-input");
+
+      messageInput.addEventListener("input", async () => {
+        if (!currentUser) return;
+        // marcar escribiendo = true
+        await setDoc(
+          doc(db, "usuarios", currentUser),
+          { escribiendo: true },
+          { merge: true }
+        );
+
+        clearTimeout(typingTimeout);
+        typingTimeout = setTimeout(async () => {
+          await setDoc(
+            doc(db, "usuarios", currentUser),
+            { escribiendo: false },
+            { merge: true }
+          );
+        }, 2500); // si no escribe por 2.5 seg, se desactiva
+      });
+
+      // 🔹 Escuchar si el otro usuario está escribiendo
+      function listenTypingStatus(otherUser) {
+        const statusEl = document.getElementById("chat-status");
+        if (!otherUser) return;
+        const ref = doc(db, "usuarios", otherUser);
+
+        onSnapshot(ref, (snap) => {
+          if (!snap.exists()) return;
+          const data = snap.data();
+
+          // ✍️ escribiendo...
+          if (data.escribiendo) {
+            statusEl.textContent = "escribiendo...";
+            statusEl.style.color = "#fff176";
+            return;
+          }
+
+          const lastPing = data.ultimoPing || 0;
+          const diff = (Date.now() - lastPing) / 1000; // segundos
+
+          if (diff < 8) {
+            statusEl.textContent = "en línea";
+            statusEl.style.color = "#a5ffb0";
+          } else if (diff < 60) {
+            statusEl.textContent = "hace un momento";
+            statusEl.style.color = "#b0bec5";
+          } else {
+            const fecha = data.ultimoAcceso
+              ? data.ultimoAcceso.toDate
+                ? data.ultimoAcceso.toDate()
+                : new Date(data.ultimoAcceso)
+              : new Date(lastPing);
+            const diffMin = Math.floor((Date.now() - fecha.getTime()) / 60000);
+            statusEl.textContent =
+              diffMin < 60 ? `hace ${diffMin} min` : fecha.toLocaleDateString();
+            statusEl.style.color = "#b0bec5";
+          }
+        });
+      }
+
       window.login = login;
       window.sendMessage = sendMessage;
 
@@ -1313,28 +1690,11 @@
       };
 
       // 🔸 Sobrescribimos los lugares donde se cambia el encabezado
-      window.updateChatHeader = (name) => {
-        chatHeader.textContent = name;
-        ensureMenuIcon();
-      };
-
       function updateChatHeader(name) {
-        const chatHeader = document.getElementById("chat-header");
-        chatHeader.textContent = name;
-        ensureMenuIcon(); // vuelve a añadir el ☰ si estamos en móvil
+        const chatName = document.getElementById("chat-name");
+        if (chatName) chatName.textContent = name;
+        ensureMenuIcon();
       }
-
-      // Luego cambia las líneas como esta:
-      document.getElementById(
-        "chat-header"
-      ).textContent = `${currentUser} (Tú)`;
-      // por esto:
-      updateChatHeader(`${currentUser} (Tú)`);
-
-      // Y esta:
-      document.getElementById("chat-header").textContent = `${otherUser}`;
-      // por esto:
-      updateChatHeader(`${otherUser}`);
 
       // ✅ Cerrar el menú de contactos automáticamente en móvil al abrir un chat
       function closeMenuOnMobile() {
@@ -1394,6 +1754,98 @@
           chatMessages.classList.remove("scroll-up", "scroll-down");
         }, 400);
       });
+
+      // ✅ Sobrescribir sendMessage después de definirla
+      const originalSendMessage = window.sendMessage;
+
+      // 🟦 Detectar /menu o /menú en tu chat personal
+      async function handleMenuCommand() {
+        if (
+          !currentUser ||
+          !(
+            activeChatId &&
+            activeChatId.includes(currentUser) &&
+            activeChatId.includes("admin")
+          )
+        ) {
+          alert("⚠️ Este comando solo funciona en tu chat personal.");
+          return;
+        }
+
+        // Crear modal
+        let modal = document.getElementById("menu-modal");
+        if (modal) modal.remove(); // por si ya existe
+
+        modal = document.createElement("div");
+        modal.id = "menu-modal";
+        modal.style.position = "fixed";
+        modal.style.inset = "0";
+        modal.style.background = "rgba(0,0,0,0.4)";
+        modal.style.display = "flex";
+        modal.style.justifyContent = "center";
+        modal.style.alignItems = "center";
+        modal.style.zIndex = "2000";
+        modal.innerHTML = `
+      <div style="background:white;padding:20px;border-radius:10px;max-width:320px;width:90%;box-shadow:0 4px 10px rgba(0,0,0,0.3);">
+        <h3 style="margin-top:0;color:#00bcd4;">⚙️ Configuración de cuenta</h3>
+        <label>Nuevo nombre:</label>
+        <input id="new-username" type="text" style="width:100%;padding:8px;margin:6px 0;border:1px solid #ccc;border-radius:5px;" placeholder="${currentUser}" />
+        <label>Nueva contraseña:</label>
+        <input id="new-password" type="password" style="width:100%;padding:8px;margin:6px 0;border:1px solid #ccc;border-radius:5px;" placeholder="••••••" />
+        <div style="text-align:right;margin-top:10px;">
+          <button id="cancel-menu" style="margin-right:8px;padding:6px 10px;border:none;background:#ccc;border-radius:5px;cursor:pointer;">Cancelar</button>
+          <button id="save-menu" style="padding:6px 10px;border:none;background:#00bcd4;color:white;border-radius:5px;cursor:pointer;">Guardar</button>
+        </div>
+      </div>
+    `;
+        document.body.appendChild(modal);
+
+        document.getElementById("cancel-menu").onclick = () => modal.remove();
+        document.getElementById("save-menu").onclick = async () => {
+          const newUsername = document
+            .getElementById("new-username")
+            .value.trim();
+          const newPassword = document
+            .getElementById("new-password")
+            .value.trim();
+          if (!newUsername && !newPassword)
+            return alert("Introduce un cambio.");
+
+          const userRef = doc(db, "usuarios", currentUser);
+          const updates = {};
+          if (newUsername) updates.nombre = newUsername;
+          if (newPassword) updates.password = newPassword;
+
+          await setDoc(userRef, updates, { merge: true });
+
+          if (newUsername) {
+            sessionStorage.setItem("currentUser", newUsername);
+            currentUser = newUsername;
+            alert(
+              "✅ Nombre de usuario actualizado. Vuelve a iniciar sesión para ver los cambios."
+            );
+          } else {
+            alert("✅ Contraseña actualizada correctamente.");
+          }
+
+          modal.remove();
+        };
+      }
+
+      // 🔹 Interceptar envío de mensajes
+      window.sendMessage = async function () {
+        const messageInput = document.getElementById("message-input");
+        const text = messageInput.value.trim().toLowerCase();
+
+        if (text === "/menu" || text === "/menú") {
+          messageInput.value = "";
+          await handleMenuCommand();
+          return;
+        }
+
+        // Si no es el comando, sigue el envío normal
+        await originalSendMessage();
+      };
     </script>
   </body>
 </html>
