@@ -309,17 +309,30 @@
         }
       }
 
-      /* Ocultar la lista de usuarios en móvil */
+      /* Modo móvil */
       @media (max-width: 768px) {
         body {
-          height: 100%;
-          overflow: hidden;
-          justify-content: flex-start;
-          align-items: stretch;
+          overflow: auto;
+          height: 100dvh;
+          display: block;
+        }
+
+        .login-container {
+          position: fixed;
+          left: 50%;
+          top: 50%;
+          transform: translate(-50%, -50%);
+          width: calc(100% - 32px);
+          max-width: 420px;
+          margin: 0;
+          box-sizing: border-box;
+          max-height: 90dvh;
+          overflow: auto;
+          -webkit-overflow-scrolling: touch;
         }
 
         .chat-container {
-          height: 100dvh; /* Usa la nueva unidad dinámica del viewport móvil */
+          height: 100dvh;
           max-height: 100dvh;
           flex-direction: column;
           overflow: hidden;
@@ -1224,6 +1237,25 @@
         const userItem = e.target.closest(".user-item");
         if (userItem) {
           closeMenuOnMobile();
+        }
+      });
+
+      // 👇 Cierra el menú de usuarios si se hace clic fuera (solo en móvil)
+      document.addEventListener("click", (event) => {
+        const isMobile = window.innerWidth <= 768;
+        const menu = document.getElementById("user-list");
+        const menuIcon = document.querySelector(".menu-icon");
+
+        // Si no estamos en móvil, no hacer nada
+        if (!isMobile) return;
+
+        // Si el menú está abierto y el clic no fue dentro del menú ni en el icono ☰ → cerrar
+        if (
+          menu.classList.contains("show") &&
+          !menu.contains(event.target) &&
+          !menuIcon?.contains(event.target)
+        ) {
+          menu.classList.remove("show");
         }
       });
     </script>
