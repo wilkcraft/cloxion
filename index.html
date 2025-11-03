@@ -131,10 +131,12 @@
         margin-bottom: 10px;
         padding: 8px 12px;
         border-radius: 18px;
-        max-width: 75%;
+        max-width: 65%; /* ✅ Mantiene el límite máximo actual */
+        width: fit-content; /* ✅ Se ajusta al texto */
         word-wrap: break-word;
         position: relative;
-        user-select: none;
+        white-space: pre-wrap; /* ✅ Mantiene saltos de línea */
+        overflow-wrap: break-word; /* ✅ Evita desbordes de texto largos */
       }
 
       .message.sent {
@@ -517,6 +519,143 @@
         text-align: left;
       }
 
+      /* ---- Barra de mensaje fijado (arriba del chat) ---- */
+      #pinned-message {
+        max-width: 100%;
+        overflow: hidden;
+        box-sizing: border-box;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 8px 12px;
+        color: white;
+        font-weight: 600;
+        cursor: pointer;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+        border-bottom-left-radius: 6px;
+        border-bottom-right-radius: 6px;
+      }
+
+      /* Icono y texto truncado */
+      #pinned-message .pin-icon {
+        font-size: 18px;
+        margin-right: 6px;
+      }
+      #pinned-message .pin-text {
+        flex: 1;
+        min-width: 0;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        display: block;
+        max-width: calc(100% - 60px);
+      }
+
+      /* Botón para quitar fijado */
+      #pinned-message .pin-unpin {
+        margin-left: auto;
+        background: rgba(255, 255, 255, 0.18);
+        border: none;
+        color: white;
+        padding: 6px 8px;
+        border-radius: 6px;
+        cursor: pointer;
+      }
+
+      /* ---- Vista previa de respuesta ---- */
+      #reply-preview {
+        position: absolute;
+        bottom: 65px;
+        width: 80%;
+        box-sizing: border-box;
+        padding: 8px 12px;
+        border-left: 4px solid rgba(0, 0, 0, 0.12);
+        background: #f6f7f9;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 13px;
+        border-bottom: 1px solid #ddd;
+        z-index: 15;
+      }
+      #reply-preview .reply-text {
+        flex: 1;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      #reply-preview .reply-cancel {
+        background: none;
+        border: none;
+        font-size: 18px;
+        cursor: pointer;
+      }
+
+      /* ---- Resaltado momentáneo para salto ---- */
+      .message.highlight {
+        position: relative;
+        overflow: hidden;
+      }
+
+      .message.highlight::after {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(
+          90deg,
+          transparent,
+          rgba(0, 188, 212, 0.25),
+          transparent
+        );
+        animation: slideHighlight 1.2s ease;
+      }
+
+      @keyframes slideHighlight {
+        0% {
+          left: -100%;
+        }
+        50% {
+          left: 0%;
+        }
+        100% {
+          left: 100%;
+        }
+      }
+
+      /* === Botón de scroll al final del chat === */
+      .scroll-to-bottom-btn {
+        position: absolute;
+        bottom: 80px;
+        right: 20px;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background-color: #00bcd4;
+        color: white;
+        border: none;
+        cursor: pointer;
+        font-size: 20px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 100;
+        transition: all 0.3s ease;
+      }
+
+      .scroll-to-bottom-btn:hover {
+        background-color: #0097a7;
+        transform: scale(1.1);
+      }
+
+      .scroll-to-bottom-btn.visible {
+        display: flex;
+      }
+
       @media (min-width: 769px) {
         .chat-container {
           margin-left: 220px; /* ancho de .user-list */
@@ -563,6 +702,7 @@
           overflow-y: auto;
           -webkit-overflow-scrolling: touch;
           scroll-behavior: smooth;
+          max-width: 90%;
         }
 
         .chat-header {
@@ -819,6 +959,23 @@
         .chat-status {
           color: #b2ebf2;
         }
+
+        #pinned-message {
+          background: #00838f;
+        }
+        #reply-preview {
+          background: #2b2b2b;
+          border-left-color: rgba(255, 255, 255, 0.08);
+          color: #ddd;
+        }
+
+        .scroll-to-bottom-btn {
+          background-color: #00838f;
+        }
+
+        .scroll-to-bottom-btn:hover {
+          background-color: #00acc1;
+        }
       }
     </style>
   </head>
@@ -856,6 +1013,12 @@
         </div>
         <div id="chat-status" class="chat-status"></div>
       </div>
+
+      <!-- Barra de mensaje fijado (estilo WhatsApp) -->
+      <div id="pinned-message" style="display: none"></div>
+
+      <!-- Vista previa de respuesta sobre el input -->
+      <div id="reply-preview" style="display: none"></div>
       <div class="chat-messages" id="chat-messages"></div>
       <div class="chat-input">
         <input
@@ -865,6 +1028,14 @@
         />
         <button onclick="sendMessage()">➤</button>
       </div>
+
+      <button
+        class="scroll-to-bottom-btn"
+        id="scroll-to-bottom"
+        title="Ir al final"
+      >
+        ↓
+      </button>
     </div>
 
     <script type="module">
@@ -883,6 +1054,7 @@
         orderBy,
         getDocs,
         serverTimestamp,
+        writeBatch,
       } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
 
       import {
@@ -946,6 +1118,11 @@
       });
 
       let currentUser = sessionStorage.getItem("currentUser") || null;
+
+      // --- Estado para respuesta y fijado ---
+      let replyTo = null; // { id, texto, usuario } cuando se está respondiendo
+      let pinnedDataLocal = null; // guardamos el objeto del mensaje fijado actual
+
       let activeChatId = null;
       let activeChatWith = null;
 
@@ -986,6 +1163,8 @@
           document.getElementById("login-container").style.display = "none";
           document.getElementById("chat-container").style.display = "flex";
 
+          initScrollToBottomButton();
+
           await loadUserList();
           listenForIncomingMessages();
 
@@ -996,6 +1175,7 @@
           activeChatId = `${currentUser}_self`; // chat consigo mismo
           updateChatHeader(`${currentUser} (Tú)`);
           loadMessages(activeChatId);
+          attachPinnedListener(activeChatId);
 
           sessionStorage.setItem("lastChatWith", "Admin"); // 🟩 Guardar si está en su propio chat
 
@@ -1014,6 +1194,10 @@
             { ultimoPing: Date.now() },
             { merge: true }
           );
+
+          setTimeout(() => {
+            initScrollToBottomButton();
+          }, 500);
         }
       }, 5000);
 
@@ -1050,7 +1234,6 @@
                 }
               });
               updateUnreadBadge(user, unreadCount);
-              sortUserListByLastMessage();
             });
           });
         });
@@ -1059,10 +1242,15 @@
       async function loadUserList() {
         const userList = document.getElementById("user-list");
 
+        // 🧹 Limpiar lista de usuarios (manteniendo el logo Cloxion)
+        const header = userList.querySelector(".cloxion-header");
+        userList.innerHTML = "";
+        if (header) userList.appendChild(header);
+
         // 🔹 Crear el usuario "Admin (Tú)"
         const adminDiv = document.createElement("div");
         adminDiv.classList.add("user-item", "admin-item");
-        adminDiv.dataset.name = currentUser; // ✅ Guardar el nombre real del usuario
+        adminDiv.dataset.name = currentUser;
 
         const adminAvatar = document.createElement("div");
         adminAvatar.classList.add("user-avatar");
@@ -1080,13 +1268,11 @@
             .forEach((el) => el.classList.remove("active"));
           adminDiv.classList.add("active");
 
-          // Chat personal del usuario
           activeChatWith = currentUser;
           activeChatId = `${currentUser}_self`;
 
           updateChatHeader(`${currentUser} (Tú)`);
           loadMessages(activeChatId);
-
           closeMenuOnMobile();
         };
 
@@ -1097,42 +1283,39 @@
         usersSnap.forEach((u) => {
           const data = u.data();
 
-          // 👇 Solo mostrar "Admin" si el usuario es Miguel
           if (data.nombre === "Admin" && currentUser !== "Miguel") return;
+          if (data.nombre === currentUser) return;
 
-          if (data.nombre !== currentUser) {
-            const div = document.createElement("div");
-            div.classList.add("user-item");
-            div.dataset.name = data.nombre;
+          const div = document.createElement("div");
+          div.classList.add("user-item");
+          div.dataset.name = data.nombre;
 
-            const avatar = document.createElement("div");
-            avatar.classList.add("user-avatar");
-            avatar.textContent = data.nombre.charAt(0).toUpperCase();
+          const avatar = document.createElement("div");
+          avatar.classList.add("user-avatar");
+          avatar.textContent = data.nombre.charAt(0).toUpperCase();
 
-            const name = document.createElement("span");
-            name.textContent = data.nombre;
+          const name = document.createElement("span");
+          name.textContent = data.nombre;
 
-            div.appendChild(avatar);
-            div.appendChild(name);
+          div.appendChild(avatar);
+          div.appendChild(name);
 
-            // 🔹 Añadir el círculo de mensajes no leídos
-            const badge = document.createElement("span");
-            badge.classList.add("unread-badge");
-            badge.id = `badge_${data.nombre}`;
-            badge.textContent = "0";
-            div.appendChild(badge);
+          const badge = document.createElement("span");
+          badge.classList.add("unread-badge");
+          badge.id = `badge_${data.nombre}`;
+          badge.textContent = "0";
+          div.appendChild(badge);
 
-            div.onclick = () => {
-              document
-                .querySelectorAll(".user-item")
-                .forEach((el) => el.classList.remove("active"));
-              div.classList.add("active");
-              openPrivateChat(data.nombre);
-              closeMenuOnMobile();
-            };
+          div.onclick = () => {
+            document
+              .querySelectorAll(".user-item")
+              .forEach((el) => el.classList.remove("active"));
+            div.classList.add("active");
+            openPrivateChat(data.nombre);
+            closeMenuOnMobile();
+          };
 
-            userList.appendChild(div);
-          }
+          userList.appendChild(div);
         });
       }
 
@@ -1181,11 +1364,13 @@
         usersWithTimestamps.forEach(({ div }) => userList.appendChild(div));
       }
 
+      let currentChatUnsub = null; // 🆕 global
+
       async function openPrivateChat(otherUser) {
         const messagesContainer = document.getElementById("chat-messages");
         messagesContainer.innerHTML = "";
         activeChatWith = otherUser;
-        // ✅ Marcar visualmente el contacto activo
+
         document
           .querySelectorAll(".user-item")
           .forEach((el) => el.classList.remove("active"));
@@ -1195,29 +1380,216 @@
         if (currentDiv) currentDiv.classList.add("active");
 
         activeChatId = getChatId(currentUser, otherUser);
-
         updateChatHeader(`${otherUser}`);
-        listenTypingStatus(otherUser);
-        loadMessages(activeChatId);
-        updateUnreadBadge(otherUser, 0);
 
-        // 🟩 Marcar como leídos los mensajes recibidos
-        const chatRef = collection(
-          db,
-          "chatsPrivados",
-          activeChatId,
-          "mensajes"
+        // 🧹 Cancelar escucha del chat anterior
+        if (currentChatUnsub) {
+          currentChatUnsub();
+          currentChatUnsub = null;
+        }
+
+        // 🟢 Escuchar solo el chat activo
+        const q = query(
+          collection(db, "chatsPrivados", activeChatId, "mensajes"),
+          where("timestamp", "!=", null),
+          orderBy("timestamp")
         );
-        const mensajesSnap = await getDocs(chatRef);
 
-        mensajesSnap.forEach(async (msgDoc) => {
-          const msg = msgDoc.data();
-          if (msg.usuario !== currentUser && msg.check !== true) {
-            await setDoc(msgDoc.ref, { check: true }, { merge: true });
+        currentChatUnsub = onSnapshot(q, (snapshot) => {
+          const messagesContainer = document.getElementById("chat-messages");
+          messagesContainer.innerHTML = "";
+
+          let lastDate = null;
+          const ocultosKey = `${currentUser}_ocultos_${activeChatId}`;
+          const mensajesOcultos = JSON.parse(
+            localStorage.getItem(ocultosKey) || "[]"
+          );
+
+          let firstSender = null;
+
+          snapshot.forEach((docSnap) => {
+            const msg = docSnap.data();
+            if (!firstSender && msg.usuario) {
+              firstSender = msg.usuario;
+            }
+            const msgId = docSnap.id;
+
+            if (mensajesOcultos.includes(msgId)) return;
+            if (!msg.timestamp) return;
+
+            const msgDate =
+              typeof msg.timestamp.toDate === "function"
+                ? msg.timestamp.toDate()
+                : new Date(msg.timestamp);
+            const msgDayKey = msgDate.toDateString();
+
+            if (msgDayKey !== lastDate) {
+              lastDate = msgDayKey;
+              const separator = document.createElement("div");
+              separator.classList.add("date-separator");
+              separator.textContent = getDateLabel(msgDate);
+              messagesContainer.appendChild(separator);
+            }
+
+            const messageElement = document.createElement("div");
+            messageElement.classList.add(
+              "message",
+              msg.usuario === currentUser ? "sent" : "received"
+            );
+            messageElement.dataset.id = msgId;
+
+            // Si el mensaje es respuesta a otro, mostramos mini-cita arriba (clicable)
+            if (msg.respuestaA && msg.respuestaA.id) {
+              const mini = document.createElement("div");
+              mini.classList.add("message-reply-mini");
+              mini.style.fontSize = "12px";
+              mini.style.padding = "6px 8px";
+              mini.style.borderLeft = "3px solid rgba(0,0,0,0.08)";
+              mini.style.marginBottom = "6px";
+              mini.style.cursor = "pointer";
+              mini.textContent = truncate(msg.respuestaA.texto, 80);
+              // clic en la mini cita -> saltar al mensaje original
+              mini.addEventListener("click", () => {
+                scrollToMessage(msg.respuestaA.id);
+              });
+              messageElement.appendChild(mini);
+            }
+
+            const textSpan = document.createElement("span");
+            textSpan.textContent = msg.texto;
+
+            const timeSpan = document.createElement("span");
+            timeSpan.classList.add("message-time");
+            timeSpan.textContent = formatTime(msgDate);
+
+            messageElement.appendChild(textSpan);
+            messageElement.appendChild(timeSpan);
+
+            // menú contextual eliminar
+            messageElement.addEventListener("contextmenu", (e) => {
+              e.preventDefault();
+              const oldMenu = document.querySelector(".context-menu");
+              if (oldMenu) oldMenu.remove();
+
+              const menu = document.createElement("div");
+              menu.classList.add("context-menu");
+              menu.innerHTML = `
+  <button class="menu-reply">💬 Responder</button>
+  <button class="menu-pin">${
+    pinnedDataLocal && pinnedDataLocal.id === msgId
+      ? "📌 Quitar fijado"
+      : "📌 Fijar"
+  }</button>
+  <button class="menu-delete">🗑️ Eliminar</button>
+`;
+              document.body.appendChild(menu);
+
+              // 📍 Posicionar menú en el lugar exacto del click
+              const x = e.pageX;
+              const y = e.pageY;
+              menu.style.left = `${x}px`;
+              menu.style.top = `${y}px`;
+
+              // Evitar que se salga de la pantalla
+              const rect = menu.getBoundingClientRect();
+              if (rect.right > window.innerWidth)
+                menu.style.left = `${window.innerWidth - rect.width - 10}px`;
+              if (rect.bottom > window.innerHeight)
+                menu.style.top = `${window.innerHeight - rect.height - 10}px`;
+
+              // === ACCIONES ===
+
+              // 💬 RESPONDER
+              menu
+                .querySelector(".menu-reply")
+                .addEventListener("click", (ev) => {
+                  ev.stopPropagation();
+                  menu.remove();
+                  replyTo = {
+                    id: msgId,
+                    texto: msg.texto,
+                    usuario: msg.usuario,
+                  };
+                  showReplyPreview(replyTo);
+                });
+
+              // 📌 FIJAR / QUITAR FIJADO
+              menu
+                .querySelector(".menu-pin")
+                .addEventListener("click", async (ev) => {
+                  ev.stopPropagation();
+                  menu.remove();
+
+                  if (pinnedDataLocal && pinnedDataLocal.id === msgId) {
+                    await unpinMessage(activeChatId);
+                  } else {
+                    await pinMessage(activeChatId, {
+                      id: msgId,
+                      texto: msg.texto,
+                      usuario: msg.usuario,
+                      fecha: new Date().toISOString(),
+                    });
+                  }
+                });
+
+              // 🗑️ ELIMINAR
+              menu
+                .querySelector(".menu-delete")
+                .addEventListener("click", async () => {
+                  menu.remove();
+                  if (msg.usuario === currentUser) {
+                    await deleteDoc(
+                      doc(db, "chatsPrivados", activeChatId, "mensajes", msgId)
+                    );
+                  } else {
+                    const nuevosOcultos = [...mensajesOcultos, msgId];
+                    localStorage.setItem(
+                      ocultosKey,
+                      JSON.stringify(nuevosOcultos)
+                    );
+                    const el = document.querySelector(
+                      `.message[data-id="${msgId}"]`
+                    );
+                    if (el) el.remove();
+                  }
+                });
+
+              document.addEventListener(
+                "click",
+                (ev) => {
+                  if (!menu.contains(ev.target)) menu.remove();
+                },
+                { once: true }
+              );
+            });
+
+            messagesContainer.appendChild(messageElement);
+          });
+
+          if (firstSender) {
+            const startBox = document.createElement("div");
+            startBox.classList.add("chat-start");
+            startBox.textContent = `Chat comenzado por: ${firstSender}`;
+
+            if (messagesContainer.firstChild) {
+              messagesContainer.insertBefore(
+                startBox,
+                messagesContainer.firstChild
+              );
+            } else {
+              messagesContainer.appendChild(startBox);
+            }
           }
+
+          messagesContainer.scrollTop = messagesContainer.scrollHeight;
+          markMessagesAsRead(activeChatId);
         });
 
-        sessionStorage.setItem("lastChatWith", otherUser); // 🟩 Guardar contacto activo
+        attachPinnedListener(activeChatId);
+        listenTypingStatus(otherUser);
+        updateUnreadBadge(otherUser, 0);
+        markMessagesAsRead(activeChatId);
+        sessionStorage.setItem("lastChatWith", otherUser);
       }
 
       // --- Helper para normalizar timestamps ---
@@ -1290,7 +1662,9 @@
             if (mensajesOcultos.includes(msgId)) return;
 
             // 🔸 Esperar hasta que Firestore tenga timestamp real
-            if (!msg.timestamp) return; // si aún es null, lo saltamos por ahora
+            if (!msg.timestamp && !firstSender && msg.usuario) {
+              firstSender = msg.usuario;
+            }
 
             const msgDate = parseTimestamp(msg.timestamp);
             const fechaMostrar = msg.fechaTexto || msg.timestamp;
@@ -1314,16 +1688,29 @@
             messageElement.dataset.id = msgId;
 
             // Contenido del mensaje + hora
+            // Si el mensaje es respuesta a otro, mostramos mini-cita arriba (clicable)
+            if (msg.respuestaA && msg.respuestaA.id) {
+              const mini = document.createElement("div");
+              mini.classList.add("message-reply-mini");
+              mini.style.fontSize = "12px";
+              mini.style.padding = "6px 8px";
+              mini.style.borderLeft = "3px solid rgba(0,0,0,0.08)";
+              mini.style.marginBottom = "6px";
+              mini.style.cursor = "pointer";
+              mini.textContent = truncate(msg.respuestaA.texto, 80);
+              // clic en la mini cita -> saltar al mensaje original
+              mini.addEventListener("click", () => {
+                scrollToMessage(msg.respuestaA.id);
+              });
+              messageElement.appendChild(mini);
+            }
+
             const textSpan = document.createElement("span");
             textSpan.textContent = msg.texto;
 
             const timeSpan = document.createElement("span");
             timeSpan.classList.add("message-time");
-            timeSpan.textContent =
-              typeof fechaMostrar === "string"
-                ? fechaMostrar.split(",")[1]?.trim()?.slice(0, 5) ||
-                  formatTime(msgDate)
-                : formatTime(msgDate);
+            timeSpan.textContent = formatTime(msgDate);
 
             messageElement.appendChild(textSpan);
             messageElement.appendChild(timeSpan);
@@ -1336,23 +1723,73 @@
 
               const menu = document.createElement("div");
               menu.classList.add("context-menu");
-              menu.innerHTML = `<button class="menu-delete">🗑️ Eliminar</button>`;
+              menu.innerHTML = `
+  <button class="menu-reply">💬 Responder</button>
+  <button class="menu-pin">${
+    pinnedDataLocal && pinnedDataLocal.id === msgId
+      ? "📌 Quitar fijado"
+      : "📌 Fijar"
+  }</button>
+  <button class="menu-delete">🗑️ Eliminar</button>
+`;
               document.body.appendChild(menu);
 
-              const rect = messageElement.getBoundingClientRect();
-              menu.style.top = `${rect.bottom + window.scrollY - 10}px`;
-              menu.style.left = `${
-                rect.right + window.scrollX - menu.offsetWidth - 10
-              }px`;
+              // 📍 Posicionar menú en el lugar exacto del click
+              const x = e.pageX;
+              const y = e.pageY;
+              menu.style.left = `${x}px`;
+              menu.style.top = `${y}px`;
 
+              // Evitar que se salga de la pantalla
+              const rect = menu.getBoundingClientRect();
+              if (rect.right > window.innerWidth)
+                menu.style.left = `${window.innerWidth - rect.width - 10}px`;
+              if (rect.bottom > window.innerHeight)
+                menu.style.top = `${window.innerHeight - rect.height - 10}px`;
+
+              // === ACCIONES ===
+
+              // 💬 RESPONDER
+              menu
+                .querySelector(".menu-reply")
+                .addEventListener("click", (ev) => {
+                  ev.stopPropagation();
+                  menu.remove();
+                  replyTo = {
+                    id: msgId,
+                    texto: msg.texto,
+                    usuario: msg.usuario,
+                  };
+                  showReplyPreview(replyTo);
+                });
+
+              // 📌 FIJAR / QUITAR FIJADO
+              menu
+                .querySelector(".menu-pin")
+                .addEventListener("click", async (ev) => {
+                  ev.stopPropagation();
+                  menu.remove();
+
+                  if (pinnedDataLocal && pinnedDataLocal.id === msgId) {
+                    await unpinMessage(activeChatId);
+                  } else {
+                    await pinMessage(activeChatId, {
+                      id: msgId,
+                      texto: msg.texto,
+                      usuario: msg.usuario,
+                      fecha: new Date().toISOString(),
+                    });
+                  }
+                });
+
+              // 🗑️ ELIMINAR
               menu
                 .querySelector(".menu-delete")
                 .addEventListener("click", async () => {
                   menu.remove();
-
                   if (msg.usuario === currentUser) {
                     await deleteDoc(
-                      doc(db, "chatsPrivados", chatId, "mensajes", msgId)
+                      doc(db, "chatsPrivados", activeChatId, "mensajes", msgId)
                     );
                   } else {
                     const nuevosOcultos = [...mensajesOcultos, msgId];
@@ -1360,7 +1797,10 @@
                       ocultosKey,
                       JSON.stringify(nuevosOcultos)
                     );
-                    messageElement.remove();
+                    const el = document.querySelector(
+                      `.message[data-id="${msgId}"]`
+                    );
+                    if (el) el.remove();
                   }
                 });
 
@@ -1436,6 +1876,15 @@
       async function sendMessage() {
         const messageInput = document.getElementById("message-input");
         const text = messageInput.value.trim();
+
+        // Ignorar los comandos /menu y /menú por completo
+        const lower = text.toLowerCase();
+        if (lower === "/menu" || lower === "/menú") {
+          // opcional: borrar el input para dar feedback visual
+          messageInput.value = "";
+          return; // no hacer nada si el usuario escribe /menu o /menú
+        }
+
         if (!text || !currentUser || !activeChatId) return;
 
         messageInput.value = "";
@@ -1452,7 +1901,15 @@
           timestamp: serverTimestamp(),
           fechaTexto: fechaLegible,
           check: false,
+          respuestaA: replyTo
+            ? { id: replyTo.id, texto: replyTo.texto, usuario: replyTo.usuario }
+            : null,
         };
+
+        // 🔹 Ocultar la barra de respuesta después de enviar
+        if (replyTo) {
+          hideReplyPreview();
+        }
 
         // --- Mostrar mensaje localmente al instante
         const messagesContainer = document.getElementById("chat-messages");
@@ -1615,11 +2072,12 @@
       const messageInput = document.getElementById("message-input");
 
       messageInput.addEventListener("input", async () => {
-        if (!currentUser) return;
-        // marcar escribiendo = true
+        if (!currentUser || !activeChatWith) return;
+
+        // marcar escribiendo SOLO hacia la persona con la que estás chateando
         await setDoc(
           doc(db, "usuarios", currentUser),
-          { escribiendo: true },
+          { escribiendo: true, escribiendoA: activeChatWith },
           { merge: true }
         );
 
@@ -1627,31 +2085,35 @@
         typingTimeout = setTimeout(async () => {
           await setDoc(
             doc(db, "usuarios", currentUser),
-            { escribiendo: false },
+            { escribiendo: false, escribiendoA: null },
             { merge: true }
           );
-        }, 2500); // si no escribe por 2.5 seg, se desactiva
+        }, 2500);
       });
 
       // 🔹 Escuchar si el otro usuario está escribiendo
+      let currentTypingUnsub = null; // 🆕 global para controlar la suscripción activa
+
       function listenTypingStatus(otherUser) {
         const statusEl = document.getElementById("chat-status");
         if (!otherUser) return;
         const ref = doc(db, "usuarios", otherUser);
 
-        onSnapshot(ref, (snap) => {
+        // 🧠 Guardamos la función de unsubscribe globalmente
+        window.currentStatusUnsub = onSnapshot(ref, (snap) => {
           if (!snap.exists()) return;
           const data = snap.data();
 
-          // ✍️ escribiendo...
-          if (data.escribiendo) {
+          if (activeChatWith !== otherUser) return; // ⚠️ evitar estados cruzados
+
+          if (data.escribiendo && data.escribiendoA === currentUser) {
             statusEl.textContent = "escribiendo...";
             statusEl.style.color = "#fff176";
             return;
           }
 
           const lastPing = data.ultimoPing || 0;
-          const diff = (Date.now() - lastPing) / 1000; // segundos
+          const diff = (Date.now() - lastPing) / 1000;
 
           if (diff < 8) {
             statusEl.textContent = "en línea";
@@ -1673,6 +2135,138 @@
         });
       }
 
+      // ---------- Mostrar / ocultar preview de respuesta ----------
+      function showReplyPreview(msgObj) {
+        const preview = document.getElementById("reply-preview");
+        preview.innerHTML = `
+    <div style="font-size:12px;color:#666;">${escapeHtml(
+      msgObj.usuario
+    )} · <span style="font-weight:700;">${truncate(
+          msgObj.texto,
+          80
+        )}</span></div>
+    <button class="reply-cancel" aria-label="Cancelar respuesta">✖</button>
+  `;
+        preview.style.display = "flex";
+
+        preview.querySelector(".reply-cancel").onclick = () => {
+          replyTo = null;
+          preview.style.display = "none";
+        };
+      }
+
+      function hideReplyPreview() {
+        const preview = document.getElementById("reply-preview");
+        replyTo = null;
+        preview.style.display = "none";
+      }
+
+      // ---------- Utilidades ----------
+      function truncate(str, n) {
+        if (!str) return "";
+        return str.length > n ? str.slice(0, n - 1) + "…" : str;
+      }
+      function escapeHtml(unsafe) {
+        return (unsafe || "")
+          .toString()
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;");
+      }
+
+      // ---------- Mostrar mensaje fijado (barra superior) ----------
+      async function renderPinnedMessage(chatId, pinned) {
+        const container = document.getElementById("pinned-message");
+        if (!pinned) {
+          container.style.display = "none";
+          pinnedDataLocal = null;
+          return;
+        }
+        pinnedDataLocal = pinned;
+        // fondo igual que el header. Tomamos el color computado del header o fallback.
+        const header = document.getElementById("chat-header");
+        const style = getComputedStyle(header);
+        const bg = style.backgroundColor || "#00bcd4";
+
+        container.style.background = bg;
+        container.innerHTML = `
+    <span class="pin-icon">📌</span>
+    <div class="pin-text">${escapeHtml(truncate(pinned.texto, 160))}</div>
+    <button class="pin-unpin" title="Quitar fijado">✖</button>
+  `;
+        container.style.display = "flex";
+
+        // al pulsar el botón ❌ quitar fijado (para todos)
+        container.querySelector(".pin-unpin").onclick = async (e) => {
+          e.stopPropagation();
+          await unpinMessage(chatId);
+        };
+
+        // al pulsar la barra, nos desplazamos al mensaje fijado
+        container.onclick = () => {
+          if (pinned && pinned.id) scrollToMessage(pinned.id);
+        };
+      }
+
+      // ---------- Guardar / eliminar mensaje fijado en Firestore ----------
+      async function pinMessage(chatId, messageObj) {
+        // messageObj: { id, texto, usuario, fecha }
+        await setDoc(
+          doc(db, "chatsPrivados", chatId),
+          {
+            mensajeFijado: {
+              id: messageObj.id,
+              texto: messageObj.texto,
+              usuario: messageObj.usuario,
+              fecha: messageObj.fecha || new Date().toISOString(),
+            },
+          },
+          { merge: true }
+        );
+      }
+
+      async function unpinMessage(chatId) {
+        await setDoc(
+          doc(db, "chatsPrivados", chatId),
+          { mensajeFijado: null },
+          { merge: true }
+        );
+      }
+
+      // ---------- Cargar mensaje fijado al abrir chat y escuchar cambios en el documento del chat ----------
+      function attachPinnedListener(chatId) {
+        const chatDocRef = doc(db, "chatsPrivados", chatId);
+        // Removemos listener anterior si existiera
+        if (window._pinnedUnsub) window._pinnedUnsub();
+        window._pinnedUnsub = onSnapshot(chatDocRef, async (snap) => {
+          if (!snap.exists()) return renderPinnedMessage(chatId, null);
+          const data = snap.data();
+          if (!data || !data.mensajeFijado) {
+            renderPinnedMessage(chatId, null);
+            return;
+          }
+          // Si la doc tiene mensajeFijado, lo renderizamos
+          renderPinnedMessage(chatId, data.mensajeFijado);
+        });
+      }
+
+      // ---------- Scroll y resaltado al mensaje (salto desde cita o fijado) ----------
+      function scrollToMessage(msgId) {
+        if (!msgId) return;
+        const el = document.querySelector(`.message[data-id="${msgId}"]`);
+        if (!el) return;
+        // desplazamos y resaltamos
+        const container = document.getElementById("chat-messages");
+        const top = el.offsetTop - 80; // dejar algo de espacio arriba
+        container.scrollTop = top;
+        el.classList.remove("highlight");
+        // forzar reflow para reiniciar la animación si ya existe
+        void el.offsetWidth;
+        el.classList.add("highlight");
+        // quitar clase pasado un tiempo
+        setTimeout(() => el.classList.remove("highlight"), 2200);
+      }
+
       window.login = login;
       window.sendMessage = sendMessage;
 
@@ -1692,8 +2286,17 @@
       // 🔸 Sobrescribimos los lugares donde se cambia el encabezado
       function updateChatHeader(name) {
         const chatName = document.getElementById("chat-name");
+        const statusEl = document.getElementById("chat-status");
+
         if (chatName) chatName.textContent = name;
         ensureMenuIcon();
+
+        // 🟢 Ocultar barra de estado si es tu chat personal
+        if (activeChatWith === currentUser) {
+          statusEl.style.display = "none";
+        } else {
+          statusEl.style.display = "block";
+        }
       }
 
       // ✅ Cerrar el menú de contactos automáticamente en móvil al abrir un chat
@@ -1846,6 +2449,87 @@
         // Si no es el comando, sigue el envío normal
         await originalSendMessage();
       };
+
+      // reemplaza la versión anterior por esta
+      async function markMessagesAsRead(chatId) {
+        try {
+          const msgsRef = collection(db, "chatsPrivados", chatId, "mensajes");
+          const snap = await getDocs(msgsRef);
+
+          // usar batch para hacer todos los setDoc en una única operación
+          const batch = writeBatch(db);
+          let any = false;
+
+          snap.forEach((docSnap) => {
+            const msg = docSnap.data();
+            if (msg.usuario !== currentUser && msg.check !== true) {
+              const docRef = doc(
+                db,
+                "chatsPrivados",
+                chatId,
+                "mensajes",
+                docSnap.id
+              );
+              batch.set(docRef, { check: true }, { merge: true });
+              any = true;
+            }
+          });
+
+          if (any) await batch.commit();
+        } catch (err) {
+          console.error("Error marcando mensajes como leídos:", err);
+        }
+      }
+
+      // === Botón de scroll al final ===
+      function initScrollToBottomButton() {
+        const scrollBtn = document.getElementById("scroll-to-bottom");
+        const messagesContainer = document.getElementById("chat-messages");
+
+        if (!scrollBtn || !messagesContainer) return;
+
+        // Mostrar/ocultar botón basado en la posición del scroll
+        messagesContainer.addEventListener("scroll", () => {
+          const scrollThreshold = 200; // Aparece cuando estás a 200px del final
+          const isNearBottom =
+            messagesContainer.scrollHeight -
+              messagesContainer.scrollTop -
+              messagesContainer.clientHeight <=
+            scrollThreshold;
+
+          if (isNearBottom) {
+            scrollBtn.classList.remove("visible");
+          } else {
+            scrollBtn.classList.add("visible");
+          }
+        });
+
+        // Click en el botón: ir al final
+        scrollBtn.addEventListener("click", () => {
+          messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        });
+
+        // También ocultar el botón cuando lleguemos al final por otros medios
+        messagesContainer.addEventListener("scrollend", () => {
+          const isAtBottom =
+            messagesContainer.scrollHeight -
+              messagesContainer.scrollTop -
+              messagesContainer.clientHeight <=
+            10;
+
+          if (isAtBottom) {
+            scrollBtn.classList.remove("visible");
+          }
+        });
+      }
+
+      // Función para ir al final del chat (también se puede llamar desde otros lugares)
+      function scrollToBottom() {
+        const messagesContainer = document.getElementById("chat-messages");
+        if (messagesContainer) {
+          messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+      }
     </script>
   </body>
 </html>
