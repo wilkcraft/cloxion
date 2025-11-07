@@ -656,6 +656,176 @@
         display: flex;
       }
 
+      /* === 🟦 Panel de anuncios === */
+      #broadcast-panel {
+        display: none;
+        flex-direction: column;
+        align-items: center;
+        padding: 10px;
+        border-top: 1px solid #ccc;
+        border-bottom: 1px solid #ccc;
+        background: #e9ecef;
+      }
+
+      #broadcast-panel h4 {
+        margin: 5px 0;
+        color: #00bcd4;
+      }
+
+      #broadcast-input {
+        width: 90%;
+        height: 70px;
+        flex-grow: 1;
+        border: none;
+        border-radius: 10px;
+        padding: 10px;
+        outline: none;
+        resize: none;
+        margin-bottom: 8px;
+        font-family: inherit;
+        font-size: 14px;
+      }
+
+      #broadcast-send {
+        background: #00bcd4;
+        color: white;
+        border: none;
+        padding: 8px 12px;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+      }
+
+      #broadcast-send:hover {
+        background: #0097a7;
+      }
+
+      #toggle-broadcast {
+        margin: 10px auto;
+        width: 90%;
+        padding: 8px;
+        background: #00bcd4;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+      }
+
+      #toggle-broadcast:hover {
+        background: #0097a7;
+      }
+
+      /* === POPUP CREAR GRUPO === */
+      .popup-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.4);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+      }
+
+      .popup {
+        background: #ffffff;
+        border-radius: 12px;
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+        width: 90%;
+        max-width: 380px;
+        padding: 20px;
+        animation: fadeInPopup 0.3s ease;
+      }
+
+      .popup h3 {
+        color: #00bcd4;
+        text-align: center;
+        margin-bottom: 15px;
+      }
+
+      .popup .contact-list {
+        max-height: 250px;
+        overflow-y: auto;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        padding: 8px;
+        margin-bottom: 15px;
+      }
+
+      .popup .contact-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 6px 8px;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: background 0.2s;
+      }
+
+      .popup .contact-item:hover {
+        background: #e0f7fa;
+      }
+
+      .popup .contact-item.selected {
+        background: #b2ebf2;
+        font-weight: bold;
+      }
+
+      .popup button {
+        background: #00bcd4;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        padding: 10px 15px;
+        cursor: pointer;
+        width: 100%;
+        margin-top: 10px;
+        transition: background-color 0.3s;
+      }
+
+      .popup button:hover {
+        background: #0097a7;
+      }
+
+      @keyframes fadeInPopup {
+        from {
+          opacity: 0;
+          transform: scale(0.9);
+        }
+        to {
+          opacity: 1;
+          transform: scale(1);
+        }
+      }
+
+      /* === Mensajes de grupo con avatar y nombre alineados === */
+      .group-message {
+        display: flex;
+        align-items: center; /* ✅ centrado vertical */
+        gap: 10px;
+        margin-bottom: 12px;
+        max-width: 90%;
+      }
+
+      .group-message .user-avatar.small {
+        flex-shrink: 0;
+        width: 28px;
+        height: 28px;
+        font-size: 13px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 1px 3px rgba(0, 188, 212, 0.2);
+      }
+
+      .group-message .message-content {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        max-width: 100%;
+      }
+
       @media (min-width: 769px) {
         .chat-container {
           margin-left: 220px; /* ancho de .user-list */
@@ -976,6 +1146,51 @@
         .scroll-to-bottom-btn:hover {
           background-color: #00acc1;
         }
+
+        /* === 🟦 Panel de anuncios === */
+        #broadcast-panel {
+          background-color: #2c2c2c;
+        }
+
+        #broadcast-panel h4 {
+          color: #00838f;
+        }
+
+        #broadcast-input {
+          background-color: #3a3a3a;
+          color: #ffffff;
+        }
+
+        #broadcast-send {
+          background: #00838f;
+        }
+
+        #toggle-broadcast {
+          background: #00838f;
+        }
+
+        .popup {
+          background: #1e1e1e;
+          color: #fff;
+          box-shadow: 0 4px 15px rgba(0, 0, 0, 0.6);
+        }
+        .popup .contact-item:hover {
+          background: #004d40;
+        }
+        .popup .contact-item.selected {
+          background: #00695c;
+        }
+        .popup button {
+          background: #00838f;
+        }
+        .popup button:hover {
+          background: #00acc1;
+        }
+
+        .group-message .user-avatar.small {
+          background: #00acc1;
+          box-shadow: 0 1px 3px rgba(0, 172, 193, 0.3);
+        }
       }
     </style>
   </head>
@@ -1162,6 +1377,7 @@
 
           document.getElementById("login-container").style.display = "none";
           document.getElementById("chat-container").style.display = "flex";
+          listenForDeletedGroups();
 
           initScrollToBottomButton();
 
@@ -1278,13 +1494,76 @@
 
         userList.appendChild(adminDiv);
 
-        // 🔹 Cargar el resto de usuarios normales
+        if (currentUser === "Admin" || currentUser === "Miguel") {
+          // Botón para abrir/cerrar el panel
+          const toggleBroadcast = document.createElement("button");
+          toggleBroadcast.id = "toggle-broadcast";
+          toggleBroadcast.textContent = "📢 Enviar Novedad";
+
+          // Panel oculto por defecto
+          const broadcastContainer = document.createElement("div");
+          broadcastContainer.id = "broadcast-panel";
+
+          broadcastContainer.innerHTML = `
+      <h4>📢 Enviar Novedad</h4>
+      <textarea id="broadcast-input" placeholder="Escribe una novedad..."></textarea>
+      <button id="broadcast-send">➤</button>
+    `;
+
+          userList.appendChild(toggleBroadcast);
+          userList.appendChild(broadcastContainer);
+
+          // Mostrar / ocultar panel
+          toggleBroadcast.onclick = () => {
+            broadcastContainer.style.display =
+              broadcastContainer.style.display === "flex" ? "none" : "flex";
+          };
+
+          // Enviar mensaje global
+          broadcastContainer
+            .querySelector("#broadcast-send")
+            .addEventListener("click", async () => {
+              const text = document
+                .getElementById("broadcast-input")
+                .value.trim();
+              if (!text) {
+                alert("Por favor escribe un mensaje.");
+                return;
+              }
+              await sendBroadcastMessage(text);
+              document.getElementById("broadcast-input").value = "";
+            });
+        }
+
+        const btnGroup = document.createElement("button");
+        btnGroup.textContent = "➕ Crear Grupo";
+        btnGroup.id = "create-group-btn";
+        btnGroup.style.cssText = `
+    margin: 10px auto;
+    width: 90%;
+    padding: 8px;
+    background: #00bcd4;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+  `;
+        btnGroup.onclick = createGroup;
+        userList.appendChild(btnGroup);
+
+        // 🔹 Cargar el resto de usuarios normales - CON CORRECCIÓN PARA EVITAR DUPLICADOS
         const usersSnap = await getDocs(collection(db, "usuarios"));
+        const existingUsers = new Set(); // 🔥 Usar Set para evitar duplicados
+
         usersSnap.forEach((u) => {
           const data = u.data();
 
           if (data.nombre === "Admin" && currentUser !== "Miguel") return;
           if (data.nombre === currentUser) return;
+
+          // 🔥 Verificar si el usuario ya fue procesado
+          if (existingUsers.has(data.nombre)) return;
+          existingUsers.add(data.nombre);
 
           const div = document.createElement("div");
           div.classList.add("user-item");
@@ -1315,6 +1594,53 @@
             closeMenuOnMobile();
           };
 
+          userList.appendChild(div);
+        });
+
+        // === 🔹 Mostrar Grupos ===
+        const gruposSnap = await getDocs(collection(db, "grupos"));
+
+        // Verificar también en grupos eliminados
+        const deletedGroupsSnap = await getDocs(
+          collection(db, "gruposEliminados")
+        );
+        const deletedGroupIds = deletedGroupsSnap.docs.map((doc) => doc.id);
+
+        const existingGroups = new Set(); // 🔥 Usar Set para evitar grupos duplicados
+
+        // En la parte donde creas los elementos de grupo en loadUserList:
+        gruposSnap.forEach((g) => {
+          if (deletedGroupIds.includes(g.id)) return;
+
+          // 🔥 Verificar si el grupo ya fue procesado
+          if (existingGroups.has(g.id)) return;
+          existingGroups.add(g.id);
+
+          const data = g.data();
+          if (!data.miembros.includes(currentUser)) return;
+
+          const div = document.createElement("div");
+          div.classList.add("user-item");
+          div.dataset.groupId = g.id;
+          div.dataset.creador = data.creadoPor; // ← Guardar quién creó el grupo
+          div.innerHTML = `
+      <div class="user-avatar">👥</div>
+      <span>${data.nombre}</span>
+    `;
+
+          // Agregar evento de click derecho para el menú contextual
+          div.addEventListener("contextmenu", (e) => {
+            e.preventDefault();
+            showGroupContextMenu(e, g.id, data.creadoPor, data.nombre);
+          });
+
+          div.onclick = () => {
+            document
+              .querySelectorAll(".user-item")
+              .forEach((el) => el.classList.remove("active"));
+            div.classList.add("active");
+            openGroupChat(g.id, data.nombre);
+          };
           userList.appendChild(div);
         });
       }
@@ -1421,6 +1747,7 @@
               typeof msg.timestamp.toDate === "function"
                 ? msg.timestamp.toDate()
                 : new Date(msg.timestamp);
+
             const msgDayKey = msgDate.toDateString();
 
             if (msgDayKey !== lastDate) {
@@ -1437,6 +1764,10 @@
               msg.usuario === currentUser ? "sent" : "received"
             );
             messageElement.dataset.id = msgId;
+
+            if (msg.tipo === "broadcast") {
+              messageElement.classList.add("broadcast");
+            }
 
             // Si el mensaje es respuesta a otro, mostramos mini-cita arriba (clicable)
             if (msg.respuestaA && msg.respuestaA.id) {
@@ -1590,6 +1921,8 @@
         updateUnreadBadge(otherUser, 0);
         markMessagesAsRead(activeChatId);
         sessionStorage.setItem("lastChatWith", otherUser);
+        sessionStorage.setItem("lastChatType", "private");
+        sessionStorage.removeItem("lastChatId");
       }
 
       // --- Helper para normalizar timestamps ---
@@ -1686,6 +2019,10 @@
               msg.usuario === currentUser ? "sent" : "received"
             );
             messageElement.dataset.id = msgId;
+
+            if (msg.tipo === "broadcast") {
+              messageElement.classList.add("broadcast");
+            }
 
             // Contenido del mensaje + hora
             // Si el mensaje es respuesta a otro, mostramos mini-cita arriba (clicable)
@@ -1847,9 +2184,16 @@
       // 🔸 Texto de fecha: "Hoy", "Ayer" o "23 Octubre 2025"
       function getDateLabel(date) {
         const now = new Date();
-        const diffDays = Math.floor(
-          (now.setHours(0, 0, 0, 0) - date.setHours(0, 0, 0, 0)) / 86400000
-        );
+        const dateCopy = new Date(date); // ✅ Copia del objeto original
+
+        // 🔹 Crear copias para comparación sin modificar las originales
+        const nowMid = new Date(now);
+        const dateMid = new Date(dateCopy);
+
+        nowMid.setHours(0, 0, 0, 0);
+        dateMid.setHours(0, 0, 0, 0);
+
+        const diffDays = Math.floor((nowMid - dateMid) / 86400000);
 
         if (diffDays === 0) return "Hoy";
         if (diffDays === 1) return "Ayer";
@@ -1868,25 +2212,23 @@
           "Noviembre",
           "Diciembre",
         ];
-        return `${date.getDate()} ${
-          meses[date.getMonth()]
-        } ${date.getFullYear()}`;
+        return `${dateCopy.getDate()} ${
+          meses[dateCopy.getMonth()]
+        } ${dateCopy.getFullYear()}`;
       }
 
       async function sendMessage() {
         const messageInput = document.getElementById("message-input");
         const text = messageInput.value.trim();
 
-        // Ignorar los comandos /menu y /menú por completo
+        // Ignorar comandos /menu y /menú
         const lower = text.toLowerCase();
         if (lower === "/menu" || lower === "/menú") {
-          // opcional: borrar el input para dar feedback visual
           messageInput.value = "";
-          return; // no hacer nada si el usuario escribe /menu o /menú
+          return;
         }
 
         if (!text || !currentUser || !activeChatId) return;
-
         messageInput.value = "";
 
         const fecha = new Date();
@@ -1906,25 +2248,54 @@
             : null,
         };
 
-        // 🔹 Ocultar la barra de respuesta después de enviar
+        // 🔹 Ocultar barra de respuesta si hay
         if (replyTo) {
           hideReplyPreview();
         }
 
-        // --- Mostrar mensaje localmente al instante
         const messagesContainer = document.getElementById("chat-messages");
+
+        // --- Mostrar mensaje localmente
         const tempMessage = document.createElement("div");
         tempMessage.classList.add("message", "sent");
         tempMessage.innerHTML = `
-      <span>${text}</span>
-      <span class="message-time">${fechaLegible
-        .split(",")[1]
-        ?.trim()
-        ?.slice(0, 5)}</span>
-    `;
+    <span>${text}</span>
+    <span class="message-time">${fechaLegible
+      .split(",")[1]
+      ?.trim()
+      ?.slice(0, 5)}</span>
+  `;
         messagesContainer.appendChild(tempMessage);
         messagesContainer.scrollTop = messagesContainer.scrollHeight;
 
+        // 🟩 Si es un grupo, guardarlo en la colección de grupos
+        // 🟩 Si es un grupo, enviarlo igual con messageData
+        if (activeChatId.startsWith("grupo_")) {
+          const groupRef = doc(db, "grupos", activeChatId);
+          const groupSnap = await getDoc(groupRef);
+          if (!groupSnap.exists()) {
+            await setDoc(groupRef, {
+              creado: new Date().toISOString(),
+            });
+          }
+
+          await addDoc(
+            collection(db, "grupos", activeChatId, "mensajes"),
+            messageData
+          );
+
+          // 🔹 Guardar el último mensaje para orden o vista previa futura
+          await setDoc(
+            groupRef,
+            { ultimoMensaje: serverTimestamp() },
+            { merge: true }
+          );
+
+          sortUserListByLastMessage();
+          return;
+        }
+
+        // 🟨 Si es un chat privado (comportamiento normal)
         const chatRef = doc(db, "chatsPrivados", activeChatId);
         const chatSnap = await getDoc(chatRef);
         if (!chatSnap.exists()) {
@@ -1936,20 +2307,17 @@
 
         console.log("📩 Enviando a:", activeChatId);
 
-        // --- Guardar en Firestore
         await addDoc(
           collection(db, "chatsPrivados", activeChatId, "mensajes"),
           messageData
         );
 
-        // 🟦 Actualizar fecha del último mensaje en el chat
         await setDoc(
           doc(db, "chatsPrivados", activeChatId),
           { ultimoMensaje: serverTimestamp() },
           { merge: true }
         );
 
-        // 🟦 Reordenar la lista de usuarios localmente
         sortUserListByLastMessage();
       }
 
@@ -1962,6 +2330,409 @@
           else sendMessage();
         }
       });
+
+      async function sendBroadcastMessage(text) {
+        const usersSnap = await getDocs(collection(db, "usuarios"));
+        const fecha = new Date();
+        const fechaLegible = fecha.toLocaleString("es-ES", {
+          dateStyle: "long",
+          timeStyle: "medium",
+        });
+
+        // 🔹 Enviar a cada usuario (incluido el remitente)
+        for (const u of usersSnap.docs) {
+          const data = u.data();
+          const nombre = data.nombre;
+          if (!nombre) continue;
+
+          const chatId = `${nombre}_self`; // ✅ Chat personal del usuario
+
+          const messageData = {
+            texto: `📢 Novedades: ${text}`,
+            usuario: currentUser,
+            timestamp: serverTimestamp(),
+            fechaTexto: fechaLegible,
+            check: false,
+            tipo: "broadcast", // 🟦 etiqueta especial
+          };
+
+          // Crear documento del chat personal si no existe
+          await setDoc(
+            doc(db, "chatsPrivados", chatId),
+            { participantes: [nombre], creado: new Date().toISOString() },
+            { merge: true }
+          );
+
+          // Agregar el mensaje dentro del chat personal
+          await addDoc(
+            collection(db, "chatsPrivados", chatId, "mensajes"),
+            messageData
+          );
+
+          // Actualizar timestamp del último mensaje
+          await setDoc(
+            doc(db, "chatsPrivados", chatId),
+            { ultimoMensaje: serverTimestamp() },
+            { merge: true }
+          );
+        }
+
+        // 🔹 Cerrar panel y limpiar input después de enviar
+        document.getElementById("broadcast-input").value = "";
+        document.getElementById("broadcast-panel").style.display = "none";
+      }
+
+      async function createGroup() {
+        const usersSnap = await getDocs(collection(db, "usuarios"));
+        const contacts = usersSnap.docs
+          .map((u) => u.data().nombre)
+          .filter((u) => u !== currentUser);
+
+        // Crear elementos del popup
+        const overlay = document.createElement("div");
+        overlay.className = "popup-overlay";
+
+        const popup = document.createElement("div");
+        popup.className = "popup";
+
+        // Paso 1: seleccionar contactos
+        popup.innerHTML = `
+    <h3>Selecciona los miembros del grupo</h3>
+    <div class="contact-list">
+      ${contacts
+        .map(
+          (c) =>
+            `<div class="contact-item" data-name="${c}">
+              <input type="checkbox" id="chk_${c}">
+              <label for="chk_${c}">${c}</label>
+            </div>`
+        )
+        .join("")}
+    </div>
+    <button id="next-step">Siguiente ➤</button>
+  `;
+
+        overlay.appendChild(popup);
+        document.body.appendChild(overlay);
+
+        // Selección de contactos
+        popup.querySelectorAll(".contact-item").forEach((item) => {
+          item.addEventListener("click", () => {
+            const checkbox = item.querySelector("input");
+            checkbox.checked = !checkbox.checked;
+            item.classList.toggle("selected", checkbox.checked);
+          });
+        });
+
+        // Paso 2: pedir nombre
+        popup.querySelector("#next-step").addEventListener("click", () => {
+          const selected = [...popup.querySelectorAll("input:checked")].map(
+            (i) => i.id.replace("chk_", "")
+          );
+
+          if (selected.length === 0) {
+            alert("Selecciona al menos un miembro para el grupo.");
+            return;
+          }
+
+          popup.innerHTML = `
+      <h3>Nombre del grupo</h3>
+      <input type="text" id="group-name" placeholder="Ej: Equipo Alfa" style="width:100%;padding:10px;border-radius:6px;border:1px solid #ccc;margin-bottom:15px;">
+      <button id="finish-group">Finalizar ✅</button>
+    `;
+
+          popup
+            .querySelector("#finish-group")
+            .addEventListener("click", async () => {
+              const groupName = popup.querySelector("#group-name").value.trim();
+              if (!groupName) {
+                alert("Escribe un nombre para el grupo.");
+                return;
+              }
+
+              const groupId = "grupo_" + Date.now();
+              const members = [currentUser, ...selected];
+
+              await setDoc(doc(db, "grupos", groupId), {
+                nombre: groupName,
+                miembros: members,
+                creadoPor: currentUser,
+                creado: new Date().toISOString(),
+              });
+
+              document.body.removeChild(overlay);
+              await loadUserList();
+            });
+        });
+
+        // Cerrar si haces click fuera del popup
+        overlay.addEventListener("click", (e) => {
+          if (e.target === overlay) document.body.removeChild(overlay);
+        });
+      }
+
+      async function openGroupChat(groupId, groupName) {
+        activeChatId = groupId;
+        activeChatWith = groupName;
+        updateChatHeader(`👥 ${groupName}`);
+
+        const messagesContainer = document.getElementById("chat-messages");
+        messagesContainer.innerHTML = "";
+
+        const groupRef = doc(db, "grupos", groupId);
+        const groupSnap = await getDoc(groupRef);
+        const groupData = groupSnap.exists() ? groupSnap.data() : {};
+        const creador = groupData.creadoPor || "Desconocido";
+
+        // 🟦 Mostrar mensaje de encabezado
+        const startBox = document.createElement("div");
+        startBox.classList.add("chat-start");
+        startBox.textContent = `Grupo creado por: ${creador}`;
+        messagesContainer.appendChild(startBox);
+
+        const q = query(
+          collection(db, "grupos", groupId, "mensajes"),
+          where("timestamp", "!=", null),
+          orderBy("timestamp")
+        );
+
+        // Cancelar escucha previa si existe
+        if (currentChatUnsub) {
+          currentChatUnsub();
+          currentChatUnsub = null;
+        }
+
+        listenGroupTypingStatus(groupId);
+
+        currentChatUnsub = onSnapshot(q, (snapshot) => {
+          // No vaciamos el mensaje inicial
+          messagesContainer.innerHTML = "";
+          messagesContainer.appendChild(startBox);
+
+          // 🔹 CLAVE: Obtener mensajes ocultos para este grupo
+          const ocultosKey = `${currentUser}_ocultos_grupo_${groupId}`;
+          const mensajesOcultos = JSON.parse(
+            localStorage.getItem(ocultosKey) || "[]"
+          );
+
+          let lastDate = null;
+
+          snapshot.forEach((docSnap) => {
+            const msg = docSnap.data();
+            const msgId = docSnap.id;
+
+            // 🔹 CLAVE: Saltar mensajes que están en la lista de ocultos
+            if (mensajesOcultos.includes(msgId)) return;
+
+            if (!msg.timestamp) return;
+
+            const msgDate =
+              typeof msg.timestamp.toDate === "function"
+                ? msg.timestamp.toDate()
+                : new Date(msg.timestamp);
+
+            // --- Separador de fecha ---
+            const msgDayKey = msgDate.toDateString();
+            if (msgDayKey !== lastDate) {
+              lastDate = msgDayKey;
+              const separator = document.createElement("div");
+              separator.classList.add("date-separator");
+              separator.textContent = getDateLabel(msgDate);
+              messagesContainer.appendChild(separator);
+            }
+
+            // --- Crear mensaje ---
+            const messageElement = document.createElement("div");
+            messageElement.classList.add(
+              "message",
+              msg.usuario === currentUser ? "sent" : "received"
+            );
+            messageElement.dataset.id = msgId;
+
+            // 🧩 LÍNEA 1: Avatar y nombre
+            const headerLine = document.createElement("div");
+            headerLine.style.display = "flex";
+            headerLine.style.alignItems = "center";
+            headerLine.style.gap = "8px";
+            headerLine.style.marginBottom = "4px";
+
+            // Avatar
+            const avatar = document.createElement("div");
+            avatar.classList.add("user-avatar", "small");
+            avatar.textContent = msg.usuario.charAt(0).toUpperCase();
+
+            // Nombre del remitente
+            const nameLabel = document.createElement("span");
+            nameLabel.style.fontSize = "12px";
+            nameLabel.style.fontWeight = "bold";
+            nameLabel.textContent = msg.usuario;
+
+            headerLine.appendChild(avatar);
+            headerLine.appendChild(nameLabel);
+
+            // 🧩 LÍNEA 2: Contenido del mensaje
+            const contentLine = document.createElement("div");
+            contentLine.style.marginBottom = "4px";
+
+            // 🔹 Recuadro de respuesta
+            if (msg.respuestaA && msg.respuestaA.id) {
+              const mini = document.createElement("div");
+              mini.classList.add("message-reply-mini");
+              mini.style.fontSize = "12px";
+              mini.style.padding = "6px 8px";
+              mini.style.borderLeft = "3px solid rgba(0,0,0,0.08)";
+              mini.style.marginBottom = "6px";
+              mini.style.cursor = "pointer";
+              mini.textContent = truncate(msg.respuestaA.texto, 80);
+              mini.addEventListener("click", () => {
+                scrollToMessage(msg.respuestaA.id);
+              });
+              contentLine.appendChild(mini);
+            }
+
+            // Texto del mensaje
+            const textSpan = document.createElement("span");
+            textSpan.textContent = msg.texto;
+            contentLine.appendChild(textSpan);
+
+            // 🧩 LÍNEA 3: Hora
+            const timeLine = document.createElement("div");
+            const timeSpan = document.createElement("span");
+            timeSpan.classList.add("message-time");
+            timeSpan.textContent = formatTime(msgDate);
+            timeLine.appendChild(timeSpan);
+
+            // Agregar todas las líneas al mensaje
+            messageElement.appendChild(headerLine);
+            messageElement.appendChild(contentLine);
+            messageElement.appendChild(timeLine);
+
+            // 🔹 Alinear mensajes propios a la derecha, ajenos a la izquierda
+            if (msg.usuario === currentUser) {
+              messageElement.style.alignSelf = "flex-end";
+              messageElement.style.marginLeft = "auto";
+              messageElement.style.marginRight = "0";
+            } else {
+              messageElement.style.alignSelf = "flex-start";
+              messageElement.style.marginLeft = "0";
+              messageElement.style.marginRight = "auto";
+            }
+
+            // === 🟦 MENÚ CONTEXTUAL PARA GRUPOS ===
+            messageElement.addEventListener("contextmenu", (e) => {
+              e.preventDefault();
+              const oldMenu = document.querySelector(".context-menu");
+              if (oldMenu) oldMenu.remove();
+
+              const menu = document.createElement("div");
+              menu.classList.add("context-menu");
+              menu.innerHTML = `
+  <button class="menu-reply">💬 Responder</button>
+  <button class="menu-pin">${
+    pinnedDataLocal && pinnedDataLocal.id === msgId
+      ? "📌 Quitar fijado"
+      : "📌 Fijar"
+  }</button>
+  <button class="menu-delete">🗑️ ${
+    msg.usuario === currentUser ? "Eliminar" : "Eliminar"
+  }</button>
+`;
+
+              document.body.appendChild(menu);
+
+              // 📍 Posicionar menú en el lugar exacto del click
+              const x = e.pageX;
+              const y = e.pageY;
+              menu.style.left = `${x}px`;
+              menu.style.top = `${y}px`;
+
+              // Evitar que se salga de la pantalla
+              const rect = menu.getBoundingClientRect();
+              if (rect.right > window.innerWidth)
+                menu.style.left = `${window.innerWidth - rect.width - 10}px`;
+              if (rect.bottom > window.innerHeight)
+                menu.style.top = `${window.innerHeight - rect.height - 10}px`;
+
+              // === ACCIONES PARA GRUPOS ===
+
+              // 💬 RESPONDER
+              menu
+                .querySelector(".menu-reply")
+                .addEventListener("click", (ev) => {
+                  ev.stopPropagation();
+                  menu.remove();
+                  replyTo = {
+                    id: msgId,
+                    texto: msg.texto,
+                    usuario: msg.usuario,
+                  };
+                  showReplyPreview(replyTo);
+                });
+
+              // 📌 FIJAR / QUITAR FIJADO (para grupos usamos la misma colección de grupos)
+              menu
+                .querySelector(".menu-pin")
+                .addEventListener("click", async (ev) => {
+                  ev.stopPropagation();
+                  menu.remove();
+
+                  if (pinnedDataLocal && pinnedDataLocal.id === msgId) {
+                    await unpinGroupMessage(groupId);
+                  } else {
+                    await pinGroupMessage(groupId, {
+                      id: msgId,
+                      texto: msg.texto,
+                      usuario: msg.usuario,
+                      fecha: new Date().toISOString(),
+                    });
+                  }
+                });
+
+              // 🗑️ ELIMINAR/OCULTAR
+              menu
+                .querySelector(".menu-delete")
+                .addEventListener("click", async () => {
+                  menu.remove();
+                  if (msg.usuario === currentUser) {
+                    // El usuario puede eliminar sus propios mensajes
+                    await deleteDoc(
+                      doc(db, "grupos", groupId, "mensajes", msgId)
+                    );
+                  } else {
+                    // Para mensajes de otros, ocultarlos localmente
+                    const nuevosOcultos = [...mensajesOcultos, msgId];
+                    localStorage.setItem(
+                      ocultosKey,
+                      JSON.stringify(nuevosOcultos)
+                    );
+                    const el = document.querySelector(
+                      `.message[data-id="${msgId}"]`
+                    );
+                    if (el) el.remove();
+                  }
+                });
+
+              document.addEventListener(
+                "click",
+                (ev) => {
+                  if (!menu.contains(ev.target)) menu.remove();
+                },
+                { once: true }
+              );
+            });
+
+            // Agregar el mensaje al contenedor
+            messagesContainer.appendChild(messageElement);
+          });
+
+          messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        });
+
+        attachGroupPinnedListener(groupId);
+        sessionStorage.setItem("lastChatWith", groupName);
+        sessionStorage.setItem("lastChatType", "group");
+        sessionStorage.setItem("lastChatId", groupId);
+      }
 
       window.addEventListener("load", () => {
         document.querySelectorAll("input").forEach((i) => (i.value = ""));
@@ -2017,35 +2788,56 @@
 
         // Esperamos un poco para asegurar que la lista se renderiza correctamente
         const lastChat = sessionStorage.getItem("lastChatWith") || "Admin";
+        const lastChatType =
+          sessionStorage.getItem("lastChatType") || "private"; // "private" o "group"
+        const lastChatId = sessionStorage.getItem("lastChatId"); // Para grupos
 
         const restoreChat = async () => {
           const userItems = document.querySelectorAll(".user-item");
           if (userItems.length === 0) return setTimeout(restoreChat, 100);
 
-          // ✅ Si es un chat con otro usuario
-          if (lastChat && lastChat !== "Admin") {
-            await openPrivateChat(lastChat);
-          } else {
-            // ✅ Chat personal del usuario
-            activeChatWith = currentUser;
-            activeChatId = `${currentUser}_self`;
-            updateChatHeader(`${currentUser} (Tú)`);
-            loadMessages(activeChatId);
-            sessionStorage.setItem("lastChatWith", currentUser);
+          // ✅ Si es un grupo
+          if (lastChatType === "group" && lastChatId) {
+            const groupItem = [...document.querySelectorAll(".user-item")].find(
+              (d) => d.dataset.groupId === lastChatId
+            );
+            if (groupItem) {
+              const groupName = groupItem.querySelector("span").textContent;
+              await openGroupChat(lastChatId, groupName);
+            } else {
+              // Si no encontramos el grupo, ir al chat personal
+              await restorePersonalChat();
+            }
           }
+          // ✅ Si es un chat privado con otro usuario
+          else if (lastChat && lastChat !== "Admin") {
+            await openPrivateChat(lastChat);
+          }
+          // ✅ Chat personal del usuario
+          else {
+            await restorePersonalChat();
+          }
+
+          // ✅ Volver a colocar el botón ☰ en móvil
+          ensureMenuIcon();
+        };
+
+        const restorePersonalChat = async () => {
+          activeChatWith = currentUser;
+          activeChatId = `${currentUser}_self`;
+          updateChatHeader(`${currentUser} (Tú)`);
+          loadMessages(activeChatId);
+          sessionStorage.setItem("lastChatWith", currentUser);
+          sessionStorage.setItem("lastChatType", "private");
 
           // ✅ Marcar el contacto activo visualmente
           document
             .querySelectorAll(".user-item")
             .forEach((el) => el.classList.remove("active"));
-          const targetName = lastChat === "Admin" ? currentUser : lastChat;
           const activeUser = [...document.querySelectorAll(".user-item")].find(
-            (d) => d.dataset.name === targetName
+            (d) => d.dataset.name === currentUser
           );
           if (activeUser) activeUser.classList.add("active");
-
-          // ✅ Volver a colocar el botón ☰ en móvil
-          ensureMenuIcon();
         };
 
         // Ejecutar restauración después de 400ms para móviles lentos
@@ -2074,21 +2866,34 @@
       messageInput.addEventListener("input", async () => {
         if (!currentUser || !activeChatWith) return;
 
-        // marcar escribiendo SOLO hacia la persona con la que estás chateando
-        await setDoc(
-          doc(db, "usuarios", currentUser),
-          { escribiendo: true, escribiendoA: activeChatWith },
-          { merge: true }
-        );
-
-        clearTimeout(typingTimeout);
-        typingTimeout = setTimeout(async () => {
+        if (activeChatId.startsWith("grupo_")) {
+          // 🟦 Manejar escritura en grupos
+          handleGroupTyping(activeChatId);
+        } else {
+          // Manejar escritura en chats privados (código original)
           await setDoc(
             doc(db, "usuarios", currentUser),
-            { escribiendo: false, escribiendoA: null },
+            {
+              escribiendo: true,
+              escribiendoA: activeChatWith,
+              ultimoPing: Date.now(),
+            },
             { merge: true }
           );
-        }, 2500);
+
+          clearTimeout(typingTimeout);
+          typingTimeout = setTimeout(async () => {
+            await setDoc(
+              doc(db, "usuarios", currentUser),
+              {
+                escribiendo: false,
+                escribiendoA: null,
+                ultimoPing: Date.now(),
+              },
+              { merge: true }
+            );
+          }, 2500);
+        }
       });
 
       // 🔹 Escuchar si el otro usuario está escribiendo
@@ -2097,14 +2902,21 @@
       function listenTypingStatus(otherUser) {
         const statusEl = document.getElementById("chat-status");
         if (!otherUser) return;
+
+        // 🟦 Si es un grupo, usar lógica diferente
+        if (activeChatId.startsWith("grupo_")) {
+          listenGroupTypingStatus(activeChatId);
+          return;
+        }
+
+        // Lógica original para chats privados
         const ref = doc(db, "usuarios", otherUser);
 
-        // 🧠 Guardamos la función de unsubscribe globalmente
         window.currentStatusUnsub = onSnapshot(ref, (snap) => {
           if (!snap.exists()) return;
           const data = snap.data();
 
-          if (activeChatWith !== otherUser) return; // ⚠️ evitar estados cruzados
+          if (activeChatWith !== otherUser) return;
 
           if (data.escribiendo && data.escribiendoA === currentUser) {
             statusEl.textContent = "escribiendo...";
@@ -2133,6 +2945,103 @@
             statusEl.style.color = "#b0bec5";
           }
         });
+      }
+
+      function listenGroupTypingStatus(groupId) {
+        const statusEl = document.getElementById("chat-status");
+
+        // Obtener miembros del grupo
+        const groupRef = doc(db, "grupos", groupId);
+
+        onSnapshot(groupRef, async (groupSnap) => {
+          if (!groupSnap.exists()) return;
+
+          const groupData = groupSnap.data();
+          const miembros = groupData.miembros || [];
+
+          // Escuchar estado de todos los miembros
+          const typingUsers = [];
+          const onlineUsers = [];
+
+          for (const member of miembros) {
+            if (member === currentUser) continue; // No mostrar al usuario actual
+
+            const userRef = doc(db, "usuarios", member);
+            const userSnap = await getDoc(userRef);
+
+            if (userSnap.exists()) {
+              const userData = userSnap.data();
+
+              // Verificar si está escribiendo en este grupo
+              if (userData.escribiendo && userData.escribiendoA === groupId) {
+                typingUsers.push(member);
+              }
+
+              // Verificar si está en línea
+              const lastPing = userData.ultimoPing || 0;
+              const diff = (Date.now() - lastPing) / 1000;
+              if (diff < 8) {
+                onlineUsers.push(member);
+              }
+            }
+          }
+
+          // Actualizar estado del grupo
+          if (typingUsers.length > 0) {
+            if (typingUsers.length === 1) {
+              statusEl.textContent = `${typingUsers[0]} está escribiendo...`;
+            } else if (typingUsers.length === 2) {
+              statusEl.textContent = `${typingUsers[0]} y ${typingUsers[1]} están escribiendo...`;
+            } else {
+              statusEl.textContent = `${typingUsers[0]} y ${
+                typingUsers.length - 1
+              } más están escribiendo...`;
+            }
+            statusEl.style.color = "#fff176";
+          } else if (onlineUsers.length > 0) {
+            if (onlineUsers.length === 1) {
+              statusEl.textContent = `${onlineUsers[0]} está en línea`;
+            } else if (onlineUsers.length === 2) {
+              statusEl.textContent = `${onlineUsers[0]} y ${onlineUsers[1]} en línea`;
+            } else {
+              statusEl.textContent = `${onlineUsers[0]} y ${
+                onlineUsers.length - 1
+              } más en línea`;
+            }
+            statusEl.style.color = "#a5ffb0";
+          } else {
+            statusEl.textContent = "Todos desconectados";
+            statusEl.style.color = "#b0bec5";
+          }
+        });
+      }
+
+      function handleGroupTyping(groupId) {
+        if (!currentUser || !groupId) return;
+
+        // Marcar escribiendo en el grupo
+        setDoc(
+          doc(db, "usuarios", currentUser),
+          {
+            escribiendo: true,
+            escribiendoA: groupId,
+            ultimoPing: Date.now(),
+          },
+          { merge: true }
+        );
+
+        clearTimeout(typingTimeout);
+        typingTimeout = setTimeout(async () => {
+          await setDoc(
+            doc(db, "usuarios", currentUser),
+            {
+              escribiendo: false,
+              escribiendoA: null,
+              ultimoPing: Date.now(),
+            },
+            { merge: true }
+          );
+        }, 2500);
       }
 
       // ---------- Mostrar / ocultar preview de respuesta ----------
@@ -2191,7 +3100,9 @@
         container.style.background = bg;
         container.innerHTML = `
     <span class="pin-icon">📌</span>
-    <div class="pin-text">${escapeHtml(truncate(pinned.texto, 160))}</div>
+    <div class="pin-text">${escapeHtml(pinned.usuario)}: ${escapeHtml(
+          truncate(pinned.texto, 160)
+        )}</div>
     <button class="pin-unpin" title="Quitar fijado">✖</button>
   `;
         container.style.display = "flex";
@@ -2199,7 +3110,11 @@
         // al pulsar el botón ❌ quitar fijado (para todos)
         container.querySelector(".pin-unpin").onclick = async (e) => {
           e.stopPropagation();
-          await unpinMessage(chatId);
+          if (activeChatId.startsWith("grupo_")) {
+            await unpinGroupMessage(activeChatId);
+          } else {
+            await unpinMessage(activeChatId);
+          }
         };
 
         // al pulsar la barra, nos desplazamos al mensaje fijado
@@ -2291,10 +3206,17 @@
         if (chatName) chatName.textContent = name;
         ensureMenuIcon();
 
-        // 🟢 Ocultar barra de estado si es tu chat personal
+        // 🟢 Mostrar/ocultar barra de estado según el tipo de chat
         if (activeChatWith === currentUser) {
+          // Chat personal - ocultar estado
           statusEl.style.display = "none";
+        } else if (activeChatId.startsWith("grupo_")) {
+          // Grupo - mostrar estado especial para grupos
+          statusEl.style.display = "block";
+          statusEl.textContent = "Cargando...";
+          statusEl.style.color = "#b0bec5";
         } else {
+          // Chat privado - mostrar estado normal
           statusEl.style.display = "block";
         }
       }
@@ -2529,6 +3451,280 @@
         if (messagesContainer) {
           messagesContainer.scrollTop = messagesContainer.scrollHeight;
         }
+      }
+
+      // ---------- Guardar / eliminar mensaje fijado en GRUPOS ----------
+      async function pinGroupMessage(groupId, messageObj) {
+        await setDoc(
+          doc(db, "grupos", groupId),
+          {
+            mensajeFijado: {
+              id: messageObj.id,
+              texto: messageObj.texto,
+              usuario: messageObj.usuario,
+              fecha: messageObj.fecha || new Date().toISOString(),
+            },
+          },
+          { merge: true }
+        );
+      }
+
+      async function unpinGroupMessage(groupId) {
+        await setDoc(
+          doc(db, "grupos", groupId),
+          { mensajeFijado: null },
+          { merge: true }
+        );
+      }
+
+      // ---------- Cargar mensaje fijado en GRUPOS ----------
+      function attachGroupPinnedListener(groupId) {
+        const groupDocRef = doc(db, "grupos", groupId);
+        // Removemos listener anterior si existiera
+        if (window._groupPinnedUnsub) window._groupPinnedUnsub();
+        window._groupPinnedUnsub = onSnapshot(groupDocRef, async (snap) => {
+          if (!snap.exists()) return renderPinnedMessage(groupId, null);
+          const data = snap.data();
+          if (!data || !data.mensajeFijado) {
+            renderPinnedMessage(groupId, null);
+            return;
+          }
+          // Si el grupo tiene mensajeFijado, lo renderizamos
+          renderPinnedMessage(groupId, data.mensajeFijado);
+        });
+      }
+
+      // Función para mostrar menú contextual de grupos
+      function showGroupContextMenu(event, groupId, creador, groupName) {
+        // Solo permitir al creador eliminar el grupo
+        if (creador !== currentUser) return;
+
+        const oldMenu = document.querySelector(".context-menu");
+        if (oldMenu) oldMenu.remove();
+
+        const menu = document.createElement("div");
+        menu.classList.add("context-menu");
+        menu.innerHTML = `
+      <button class="menu-delete-group">🗑️ Eliminar Grupo</button>
+    `;
+
+        document.body.appendChild(menu);
+
+        // Posicionar el menú
+        const x = event.pageX;
+        const y = event.pageY;
+        menu.style.left = `${x}px`;
+        menu.style.top = `${y}px`;
+
+        // Evitar que se salga de la pantalla
+        const rect = menu.getBoundingClientRect();
+        if (rect.right > window.innerWidth)
+          menu.style.left = `${window.innerWidth - rect.width - 10}px`;
+        if (rect.bottom > window.innerHeight)
+          menu.style.top = `${window.innerHeight - rect.height - 10}px`;
+
+        // Acción de eliminar grupo
+        menu
+          .querySelector(".menu-delete-group")
+          .addEventListener("click", async () => {
+            menu.remove();
+            showDeleteGroupConfirmation(groupId, groupName);
+          });
+
+        // Cerrar menú al hacer click fuera
+        document.addEventListener(
+          "click",
+          (ev) => {
+            if (!menu.contains(ev.target)) menu.remove();
+          },
+          { once: true }
+        );
+      }
+
+      // Función para eliminar grupo
+      function showDeleteGroupConfirmation(groupId, groupName) {
+        // Crear overlay del popup
+        const overlay = document.createElement("div");
+        overlay.className = "popup-overlay";
+        overlay.id = "delete-group-overlay";
+
+        // Crear popup de confirmación
+        const popup = document.createElement("div");
+        popup.className = "popup";
+        popup.innerHTML = `
+      <h3>🗑️ Eliminar Grupo</h3>
+      <p style="margin: 15px 0; color: #666; text-align: center;">
+        ¿Estás seguro de que quieres eliminar el grupo <strong>"${groupName}"</strong>?
+      </p>
+      <p style="margin: 10px 0; color: #ff4444; font-size: 14px; text-align: center;">
+        ⚠️ Esta acción no se puede deshacer
+      </p>
+      <div style="display: flex; gap: 10px; margin-top: 20px;">
+        <button id="cancel-delete-group" style="flex: 1; padding: 10px; background: #ccc; border: none; border-radius: 6px; cursor: pointer;">
+          Cancelar
+        </button>
+        <button id="confirm-delete-group" style="flex: 1; padding: 10px; background: #ff4444; color: white; border: none; border-radius: 6px; cursor: pointer;">
+          Eliminar
+        </button>
+      </div>
+    `;
+
+        overlay.appendChild(popup);
+        document.body.appendChild(overlay);
+
+        // Configurar eventos de los botones
+        document.getElementById("cancel-delete-group").onclick = () => {
+          document.body.removeChild(overlay);
+        };
+
+        document.getElementById("confirm-delete-group").onclick = async () => {
+          document.body.removeChild(overlay);
+          await deleteGroup(groupId, groupName);
+        };
+
+        // Cerrar al hacer click fuera del popup
+        overlay.addEventListener("click", (e) => {
+          if (e.target === overlay) {
+            document.body.removeChild(overlay);
+          }
+        });
+      }
+
+      async function deleteGroup(groupId, groupName) {
+        try {
+          // Mostrar indicador de carga
+          const loadingOverlay = document.createElement("div");
+          loadingOverlay.className = "popup-overlay";
+          loadingOverlay.innerHTML = `
+      <div class="popup">
+        <h3>Eliminando grupo...</h3>
+        <p style="text-align: center;">Por favor espera</p>
+      </div>
+    `;
+          document.body.appendChild(loadingOverlay);
+
+          // 1. Obtener información del grupo antes de eliminarlo
+          const groupRef = doc(db, "grupos", groupId);
+          const groupSnap = await getDoc(groupRef);
+
+          if (!groupSnap.exists()) {
+            document.body.removeChild(loadingOverlay);
+            alert("El grupo ya no existe");
+            return;
+          }
+
+          const groupData = groupSnap.data();
+          const miembros = groupData.miembros || [];
+
+          // 2. Eliminar todos los mensajes del grupo primero
+          const mensajesRef = collection(db, "grupos", groupId, "mensajes");
+          const mensajesSnap = await getDocs(mensajesRef);
+
+          const batch = writeBatch(db);
+          mensajesSnap.forEach((docSnap) => {
+            batch.delete(docSnap.ref);
+          });
+          await batch.commit();
+
+          // 3. Eliminar el documento del grupo principal
+          await deleteDoc(groupRef);
+
+          // 4. Si existe un documento en gruposEliminados, eliminarlo también
+          const deletedGroupRef = doc(db, "gruposEliminados", groupId);
+          const deletedGroupSnap = await getDoc(deletedGroupRef);
+          if (deletedGroupSnap.exists()) {
+            await deleteDoc(deletedGroupRef);
+          }
+
+          // 5. Si el grupo eliminado era el chat activo, redirigir al chat personal
+          if (activeChatId === groupId) {
+            activeChatWith = currentUser;
+            activeChatId = `${currentUser}_self`;
+            updateChatHeader(`${currentUser} (Tú)`);
+            loadMessages(activeChatId);
+
+            // Actualizar selección visual
+            document
+              .querySelectorAll(".user-item")
+              .forEach((el) => el.classList.remove("active"));
+            const adminItem = document.querySelector(".admin-item");
+            if (adminItem) adminItem.classList.add("active");
+
+            sessionStorage.setItem("lastChatWith", currentUser);
+            sessionStorage.setItem("lastChatType", "private");
+            sessionStorage.removeItem("lastChatId");
+          }
+
+          // 6. Recargar la lista de usuarios para quitar el grupo eliminado
+          await loadUserList();
+
+          // 7. Quitar el indicador de carga
+          document.body.removeChild(loadingOverlay);
+
+          console.log("✅ Grupo eliminado completamente de la base de datos");
+        } catch (error) {
+          console.error("❌ Error al eliminar el grupo:", error);
+
+          // Quitar el indicador de carga si existe
+          const loadingOverlay = document.querySelector(".popup-overlay");
+          if (
+            loadingOverlay &&
+            loadingOverlay.innerHTML.includes("Eliminando grupo")
+          ) {
+            document.body.removeChild(loadingOverlay);
+          }
+
+          alert("Error al eliminar el grupo. Inténtalo de nuevo.");
+        }
+      }
+
+      // Función para verificar grupos eliminados (se ejecuta periódicamente)
+      function showDeleteGroupConfirmation(groupId, groupName) {
+        // Crear overlay del popup
+        const overlay = document.createElement("div");
+        overlay.className = "popup-overlay";
+        overlay.id = "delete-group-overlay";
+
+        // Crear popup de confirmación
+        const popup = document.createElement("div");
+        popup.className = "popup";
+        popup.innerHTML = `
+    <h3>🗑️ Eliminar Grupo Permanentemente</h3>
+    <p style="margin: 15px 0; color: #666; text-align: center;">
+      ¿Estás seguro de que quieres eliminar completamente el grupo <strong>"${groupName}"</strong>?
+    </p>
+    <p style="margin: 10px 0; color: #ff4444; font-size: 14px; text-align: center;">
+      ⚠️ Esta acción eliminará todos los mensajes y no se puede deshacer
+    </p>
+    <div style="display: flex; gap: 10px; margin-top: 20px;">
+      <button id="cancel-delete-group" style="flex: 1; padding: 10px; background: #ccc; border: none; border-radius: 6px; cursor: pointer;">
+        Cancelar
+      </button>
+      <button id="confirm-delete-group" style="flex: 1; padding: 10px; background: #ff4444; color: white; border: none; border-radius: 6px; cursor: pointer;">
+        Eliminar Permanentemente
+      </button>
+    </div>
+  `;
+
+        overlay.appendChild(popup);
+        document.body.appendChild(overlay);
+
+        // Configurar eventos de los botones
+        document.getElementById("cancel-delete-group").onclick = () => {
+          document.body.removeChild(overlay);
+        };
+
+        document.getElementById("confirm-delete-group").onclick = async () => {
+          document.body.removeChild(overlay);
+          await deleteGroup(groupId, groupName);
+        };
+
+        // Cerrar al hacer click fuera del popup
+        overlay.addEventListener("click", (e) => {
+          if (e.target === overlay) {
+            document.body.removeChild(overlay);
+          }
+        });
       }
     </script>
   </body>
