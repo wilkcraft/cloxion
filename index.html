@@ -3679,50 +3679,47 @@
       }
 
       // Función para verificar grupos eliminados (se ejecuta periódicamente)
-      function showDeleteGroupConfirmation(groupId, groupName) {
-        // Crear overlay del popup
-        const overlay = document.createElement("div");
-        overlay.className = "popup-overlay";
-        overlay.id = "delete-group-overlay";
+      function listenForDeletedGroups() {
+        const deletedGroupsRef = collection(db, "gruposEliminados");
 
-        // Crear popup de confirmación
-        const popup = document.createElement("div");
-        popup.className = "popup";
-        popup.innerHTML = `
-    <h3>🗑️ Eliminar Grupo Permanentemente</h3>
-    <p style="margin: 15px 0; color: #666; text-align: center;">
-      ¿Estás seguro de que quieres eliminar completamente el grupo <strong>"${groupName}"</strong>?
-    </p>
-    <p style="margin: 10px 0; color: #ff4444; font-size: 14px; text-align: center;">
-      ⚠️ Esta acción eliminará todos los mensajes y no se puede deshacer
-    </p>
-    <div style="display: flex; gap: 10px; margin-top: 20px;">
-      <button id="cancel-delete-group" style="flex: 1; padding: 10px; background: #ccc; border: none; border-radius: 6px; cursor: pointer;">
-        Cancelar
-      </button>
-      <button id="confirm-delete-group" style="flex: 1; padding: 10px; background: #ff4444; color: white; border: none; border-radius: 6px; cursor: pointer;">
-        Eliminar Permanentemente
-      </button>
-    </div>
-  `;
+        onSnapshot(deletedGroupsRef, async (snapshot) => {
+          const changes = snapshot.docChanges();
 
-        overlay.appendChild(popup);
-        document.body.appendChild(overlay);
+          for (const change of changes) {
+            if (change.type === "added") {
+              const deletedGroupData = change.doc.data();
 
-        // Configurar eventos de los botones
-        document.getElementById("cancel-delete-group").onclick = () => {
-          document.body.removeChild(overlay);
-        };
+              // Verificar si el usuario actual era miembro del grupo eliminado
+              if (
+                deletedGroupData.miembros &&
+                deletedGroupData.miembros.includes(currentUser)
+              ) {
+                console.log(
+                  `📢 El grupo "${deletedGroupData.nombre}" fue eliminado`
+                );
 
-        document.getElementById("confirm-delete-group").onclick = async () => {
-          document.body.removeChild(overlay);
-          await deleteGroup(groupId, groupName);
-        };
+                // Si el grupo eliminado es el chat activo, redirigir al chat personal
+                if (activeChatId === deletedGroupData.grupoId) {
+                  activeChatWith = currentUser;
+                  activeChatId = `${currentUser}_self`;
+                  updateChatHeader(`${currentUser} (Tú)`);
+                  loadMessages(activeChatId);
 
-        // Cerrar al hacer click fuera del popup
-        overlay.addEventListener("click", (e) => {
-          if (e.target === overlay) {
-            document.body.removeChild(overlay);
+                  document
+                    .querySelectorAll(".user-item")
+                    .forEach((el) => el.classList.remove("active"));
+                  const adminItem = document.querySelector(".admin-item");
+                  if (adminItem) adminItem.classList.add("active");
+
+                  sessionStorage.setItem("lastChatWith", currentUser);
+                  sessionStorage.setItem("lastChatType", "private");
+                  sessionStorage.removeItem("lastChatId");
+                }
+
+                // Recargar la lista de usuarios para reflejar el cambio
+                await loadUserList();
+              }
+            }
           }
         });
       }
